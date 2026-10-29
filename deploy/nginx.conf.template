@@ -1,0 +1,83 @@
+# 《疏影》nginx 站点配置。由 deploy/install.sh 生成到 /etc/nginx/conf.d/shuying.conf
+# __PASSCODE__ / __ROOT__ / __PORT__ 由 install.sh 替换，别手改模板里的占位符。
+
+# 进门的四位数存在 cookie「shuying」里，和这里对上才放行
+map $cookie_shuying $shuying_ok {
+    default 0;
+    "__PASSCODE__" 1;
+}
+# 没进门的请求按 IP 限速（每分钟 10 次），防止有人挨个试；进了门的不限
+map $shuying_ok $shuying_gate_key {
+    0 $binary_remote_addr;
+    1 "";
+}
+limit_req_zone $shuying_gate_key zone=shuying_gate:1m rate=10r/m;
+limit_req_status 429;
+
+server {
+    listen __PORT__;
+    listen [::]:__PORT__;
+    server_name _;
+    root __ROOT__;
+    charset utf-8;
+
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    gzip on;
+    gzip_comp_level 5;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # 密码页和它用到的字体、样式不设门
+    location = /lock.html {
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
+    }
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+        try_files $uri =404;
+    }
+
+    # 注意：限速（limit_req）在 nginx 的 preaccess 阶段，而 location 里的 if/return 在更早的 rewrite 阶段。
+    # 所以要设门的地方都先过 limit_req，再用 try_files 跳到命名 location 里做判断，限速才真的生效。
+
+    # 密码页用它来验证：对了回 204，不对回 401
+    location = /gate {
+        limit_req zone=shuying_gate burst=5 nodelay;
+        try_files /.shuying-no-such-file @gate;
+    }
+    location @gate {
+        if ($shuying_ok = 0) { return 401; }
+        return 204;
+    }
+
+    # 照片和正文都要进门
+    location /photos/ {
+        limit_req zone=shuying_gate burst=30 nodelay;
+        try_files /.shuying-no-such-file @photos;
+    }
+    location @photos {
+        if ($shuying_ok = 0) { return 403; }
+        expires 30d;
+        add_header Cache-Control "private, max-age=2592000";
+        try_files $uri =404;
+    }
+    location = / {
+        limit_req zone=shuying_gate burst=30 nodelay;
+        try_files /.shuying-no-such-file @home;
+    }
+    location = /index.html {
+        limit_req zone=shuying_gate burst=30 nodelay;
+        try_files /.shuying-no-such-file @home;
+    }
+    location @home {
+        if ($shuying_ok = 0) { return 302 /lock.html; }
+        add_header Cache-Control "no-cache";
+        try_files /index.html =404;
+    }
+    location / {
+        return 404;
+    }
+}

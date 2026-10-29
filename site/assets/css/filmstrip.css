@@ -1,0 +1,83 @@
+/* 二 在遇见我之前 —— 35mm 胶片 */
+.ch--filmstrip {
+  --film-base: var(--color-night);
+  --film-hole: var(--color-paper-3);
+  --film-edge: var(--color-night-accent);
+  --film-band: 40px;
+  --fw: 60vw;
+}
+
+.fs-quote { padding: 0 var(--gutter); }
+.fs-quote__text { font-size: var(--text-2xl); font-weight: 600; line-height: 1.75; letter-spacing: .1em; }
+.fs-quote__by { margin-top: var(--space-md); font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-muted); }
+
+/* 片基：手机上原生横滑 */
+.film {
+  margin-top: var(--space-2xl);
+  background: var(--film-base);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.film::-webkit-scrollbar { display: none; }
+
+.film__track {
+  position: relative;
+  display: flex;
+  gap: var(--space-md);
+  width: max-content;
+  padding: var(--film-band) calc((100% - var(--fw)) / 2);
+}
+/* 上下两排齿孔：跟着片子一起走 */
+.film__track::before,
+.film__track::after {
+  content: "";
+  position: absolute; left: 0; right: 0;
+  height: var(--film-band);
+  background: linear-gradient(90deg, var(--film-hole) 0 11px, transparent 11px) 6px 9px / 24px 14px repeat-x;
+  opacity: .82;
+}
+.film__track::before { top: 0; }
+.film__track::after { bottom: 0; background-position: 6px calc(100% - 9px); }
+
+.film__frame { position: relative; flex: none; width: var(--fw); scroll-snap-align: center; }
+.film__no {
+  position: absolute; top: -15px; left: 2px;
+  font-size: 11px; line-height: 1; letter-spacing: .08em;
+  color: var(--film-edge); opacity: .85;
+}
+.film__shot { display: block; width: 100%; border-radius: var(--radius-sm); overflow: hidden; }
+.film__img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.film__cap {
+  padding: var(--space-sm) 0 var(--space-2xs);
+  font-size: var(--text-sm); line-height: 1.6; letter-spacing: .12em;
+  color: var(--color-night-muted);
+}
+.film__shot:focus-visible { outline-color: var(--color-night-accent); outline-offset: -3px; }
+
+/* 我回的：比她那四行更安静，但更重 */
+.fs-reply { padding: var(--space-3xl) var(--gutter) 0; display: grid; gap: var(--space-sm); }
+.fs-reply__text {
+  font-size: var(--text-xl); font-weight: 600; letter-spacing: .24em;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-ink);
+  justify-self: start;
+}
+.fs-reply__by { font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-muted); }
+
+@media (min-width: 40rem) { .ch--filmstrip { --fw: 36vw; } }
+
+/* 电脑端：胶片随页面竖向滚动横向平移（JS 写 transform） */
+@media (min-width: 60rem) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ch--filmstrip { --fw: clamp(220px, 21vw, 340px); }
+  .film { overflow: hidden; scroll-snap-type: none; }
+  .film__track { padding-inline: var(--gutter); will-change: transform; }
+  .fs-quote__text { font-size: clamp(2rem, 1rem + 2.2vw, 3rem); line-height: 1.7; }
+  .fs-reply { padding-left: 38%; }
+}
+@media (min-width: 60rem) {
+  .fs-quote { padding-left: 38%; }
+}

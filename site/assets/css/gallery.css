@@ -1,0 +1,62 @@
+/* 六 你：画册。手机两列，电脑一面可拖拽的照片墙（gallery.js） */
+.ch--gallery {
+  --gal-shadow: 0 1px 2px color-mix(in oklch, var(--color-ink) 10%, transparent), 0 14px 32px -18px color-mix(in oklch, var(--color-ink) 35%, transparent);
+  background: var(--color-paper-2) url(../img/grain.png);
+  background-size: 180px;
+  padding-bottom: var(--space-2xl);
+}
+
+.gal__tile {
+  display: block; width: 100%;
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-3);
+  box-shadow: var(--gal-shadow);
+}
+.gal__img { width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.gal__tile:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.gal__tile:active .gal__img { opacity: .9; }
+
+/* 没有 JS 时的退路：两列网格 */
+.gal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); padding: 0 var(--gutter); }
+
+/* 手机：两列平衡 */
+.gal--cols { align-items: start; }
+.gal__col { display: grid; gap: var(--space-sm); align-content: start; min-width: 0; }
+
+.gal__hint { padding: var(--space-lg) var(--gutter) 0; font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-muted); }
+
+/* 电脑：照片墙 */
+.gal--wall {
+  display: block;
+  position: relative;
+  height: 100svh; min-height: 34rem;
+  padding: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none; -webkit-user-select: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent), linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent), linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  mask-composite: intersect;
+}
+.gal--wall.is-grabbing { cursor: grabbing; }
+.wall__layer { position: absolute; left: 0; top: 0; will-change: transform; pointer-events: none; }
+.gal--wall .gal__tile { position: absolute; left: 0; top: 0; width: auto; pointer-events: auto; }
+.wall__layer[data-d="0"] .gal__tile { opacity: .82; }
+.wall__layer[data-d="2"] { z-index: 2; }
+.wall__layer[data-d="1"] { z-index: 1; }
+
+@media (hover: hover) and (pointer: fine) {
+  .gal__img { transition: transform var(--dur-long) var(--ease-out), opacity var(--dur-short) var(--ease-out); }
+  .gal__tile:hover .gal__img { transform: scale(1.03); }
+  .wall__layer[data-d="0"] .gal__tile { transition: opacity var(--dur-short) var(--ease-out); }
+  .wall__layer[data-d="0"] .gal__tile:hover { opacity: 1; }
+  .gal--wall.is-grabbing .gal__tile:hover .gal__img { transform: none; }
+}
+
+@media (min-width: 60rem) {
+  .ch--gallery .ch-head { margin-bottom: var(--space-xl); }
+  .gal__hint { padding-top: var(--space-md); }
+}

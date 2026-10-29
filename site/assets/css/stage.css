@@ -1,0 +1,145 @@
+/* 七 骑士 —— 暗场海报。遮光层 + 暖光都是从 token 混出来的局部变量。 */
+.ch--stage {
+  --stage-dark: color-mix(in oklch, var(--color-night) 68%, transparent);
+  --stage-warm: color-mix(in oklch, var(--color-night-accent) 15%, transparent);
+  --stage-label: var(--color-night-accent);
+  --x: 50%;
+  --y: 42%;
+  --r0: clamp(6rem, 28vmin, 11rem);
+  --r1: clamp(14rem, 62vmin, 27rem);
+  position: relative;
+  padding-bottom: var(--space-4xl);
+  /* 遮光层是 sticky + 负 margin，会画到章节外面；clip-path 只裁绘制，不像 overflow:hidden 那样把 sticky 弄坏 */
+  clip-path: inset(0);
+}
+
+/* ---------- 光：sticky 贴在视口上，不占位置 ---------- */
+.stage__light {
+  position: sticky; top: 0; z-index: 3;
+  height: 100vh; height: 100lvh;
+  margin-bottom: -100vh; margin-bottom: -100lvh;
+  pointer-events: none;
+}
+.stage__dark, .stage__glow { position: absolute; inset: 0; }
+.stage__glow { background: radial-gradient(circle at var(--x) var(--y), var(--stage-warm), transparent var(--r1)); }
+.stage__dark {
+  background: var(--stage-dark);
+  -webkit-mask-image: radial-gradient(circle at var(--x) var(--y), transparent 0, transparent var(--r0), black var(--r1));
+  mask-image: radial-gradient(circle at var(--x) var(--y), transparent 0, transparent var(--r0), black var(--r1));
+}
+.ch--stage.is-still .stage__light { display: none; }
+
+/* ---------- 版面 ---------- */
+.stage { position: relative; z-index: 1; padding: 0 var(--gutter); display: grid; gap: var(--space-3xl); overflow-x: clip; }
+
+.stage__idol {
+  display: flex; justify-content: space-between;
+  font-size: clamp(5rem, 27vw, 9rem); font-weight: 600; line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-night-ink);
+  letter-spacing: 0;
+  min-width: 0;
+}
+.stage__idol span { display: block; }
+
+/* 对白：你说的靠左，我说的往里缩，旁白是灰的 */
+.stage__script { display: grid; gap: var(--space-xl); }
+.say { display: grid; gap: var(--space-2xs); font-size: var(--text-xl); line-height: 1.75; letter-spacing: .08em; max-width: 26em; }
+.say--me { padding-left: 2.5em; }
+.say--aside { font-size: var(--text-base); color: var(--color-night-muted); letter-spacing: .12em; }
+.say__text .seg, .stage__end .seg { display: inline-block; }
+.say__who { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-xs); letter-spacing: .4em; color: var(--color-night-accent); }
+.say__who::before { content: ""; width: 1.5rem; height: 1px; background: currentColor; opacity: .6; }
+
+/* ---------- 唱片 + 歌单 ---------- */
+.stage__deck { display: grid; gap: var(--space-2xl); }
+.vinyl { position: relative; width: min(70vw, 21rem); aspect-ratio: 1; justify-self: center; margin-right: 6%; }
+.vinyl__disc, .vinyl__sheen { position: absolute; inset: 0; border-radius: 50%; }
+.vinyl__disc {
+  background:
+    radial-gradient(circle, transparent 0 33%, var(--color-night-rule) 33% 33.6%, transparent 33.6% 96.5%, var(--color-night-rule) 96.5% 97%, transparent 97%),
+    repeating-radial-gradient(circle, var(--color-night) 0 1.2px, var(--color-night-2) 1.2px 2.6px);
+  box-shadow: 0 0 0 1px var(--color-night-rule);
+  animation: vinyl-spin 6s linear infinite;
+  animation-play-state: paused;
+}
+.ch--stage.is-on .vinyl__disc { animation-play-state: running; }
+@keyframes vinyl-spin { to { transform: rotate(1turn); } }
+.vinyl__sheen {
+  pointer-events: none;
+  background: conic-gradient(from 20deg,
+    transparent 0 6%, color-mix(in oklch, var(--color-night-ink) 9%, transparent) 11%, transparent 17% 52%,
+    color-mix(in oklch, var(--color-night-ink) 7%, transparent) 58%, transparent 64%);
+}
+.vinyl__label {
+  position: absolute; inset: 33%; border-radius: 50%;
+  display: grid; place-content: center; justify-items: center; gap: .1em;
+  background: var(--stage-label); color: var(--color-ink);
+  text-align: center;
+}
+.vinyl__label::after { content: ""; position: absolute; left: 50%; top: 50%; width: 5%; aspect-ratio: 1; margin: -2.5% 0 0 -2.5%; border-radius: 50%; background: var(--color-night); }
+.vinyl__name { font-size: clamp(1.25rem, 6vw, 1.75rem); font-weight: 500; line-height: 1; margin-bottom: 1.2em; }
+.vinyl__note { position: absolute; left: 0; right: 0; top: 64%; font-size: .55rem; letter-spacing: .2em; }
+
+/* 唱臂：支点在右上，选歌时转到对应那一圈 */
+.vinyl__arm {
+  position: absolute; top: -6%; right: -12%; width: 16%; height: 78%;
+  transform-origin: 50% 7%;
+  transform: rotate(var(--arm, 2deg));
+  transition: transform 1100ms var(--ease-in-out);
+}
+.vinyl__pivot { position: absolute; left: 50%; top: 7%; width: 56%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--color-night-muted); background: var(--color-night-2); }
+.vinyl__pivot::after { content: ""; position: absolute; inset: 34%; border-radius: 50%; background: var(--color-night-muted); }
+.vinyl__rod { position: absolute; left: calc(50% - .5px); top: 7%; width: 1px; height: 84%; background: var(--color-night-muted); }
+.vinyl__head { position: absolute; left: 50%; bottom: 3%; width: 34%; height: 11%; transform: translateX(-60%) rotate(18deg); border: 1px solid var(--color-night-muted); background: var(--color-night-2); }
+
+.stage__tracks-head { font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-night-muted); margin-bottom: var(--space-sm); }
+.tracks { border-top: var(--rule-night); }
+.track {
+  width: 100%; min-height: 48px; text-align: left;
+  display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); column-gap: var(--space-sm); align-items: baseline;
+  padding: var(--space-sm) 0;
+  border-bottom: var(--rule-night);
+  color: var(--color-night-ink);
+  transition: color var(--dur-short) var(--ease-out);
+}
+.track__no { font-size: var(--text-lg); color: var(--color-night-muted); transition: color var(--dur-short) var(--ease-out); }
+.track__title { font-size: var(--text-lg); letter-spacing: .1em; }
+.track__note { grid-column: 2; font-size: var(--text-sm); color: var(--color-night-muted); letter-spacing: .08em; opacity: .7; transition: opacity var(--dur-short) var(--ease-out); }
+.track[aria-pressed="true"] .track__title,
+.track[aria-pressed="true"] .track__no { color: var(--color-night-accent); }
+.track[aria-pressed="true"] .track__note { opacity: 1; color: var(--color-night-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .track:hover .track__title { color: var(--color-night-accent); }
+}
+.track:active .track__title { transform: translateY(1px); }
+
+/* ---------- 照片 + 最后一句 ---------- */
+.stage__photos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
+.stage__photo img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-sm); }
+.stage__photo--1 { margin-top: var(--space-2xl); }
+.stage__photo figcaption { margin-top: var(--space-xs); font-size: var(--text-sm); letter-spacing: .15em; color: var(--color-night-muted); }
+.stage__end { font-size: var(--text-2xl); line-height: 1.6; letter-spacing: .12em; }
+
+/* ---------- 电脑端：左边竖排的名字一直钉着，右边往下读 ---------- */
+@media (min-width: 60rem) {
+  .stage { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); column-gap: var(--space-3xl); row-gap: var(--space-4xl); }
+  .stage__idol {
+    grid-column: 1; grid-row: 1 / span 4; align-self: start;
+    position: sticky; top: 12vh;
+    writing-mode: vertical-rl; flex-direction: row; justify-content: flex-start; gap: .04em;
+    /* 竖排时 row 才是从上往下（inline 方向） */
+    font-size: clamp(7.5rem, 11.5vw, 12.5rem);
+    justify-self: center;
+  }
+  .stage__script, .stage__deck, .stage__photos, .stage__end { grid-column: 2; }
+  .say { font-size: var(--text-2xl); }
+  .say--aside { font-size: var(--text-lg); }
+  .stage__deck { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: var(--space-3xl); }
+  .vinyl { width: 100%; max-width: 22rem; margin-right: 12%; }
+  .stage__photos { max-width: 40rem; gap: var(--space-lg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl__disc { animation: none !important; }
+}

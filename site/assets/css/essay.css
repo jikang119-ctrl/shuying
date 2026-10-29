@@ -1,0 +1,114 @@
+/* 三 高淳的一天 —— 底色从纸色走到暮色再到夜色
+ * 底色变化用三层满幅色块叠 opacity（只合成、不重绘），不逐帧改 background-color。 */
+.ch--essay {
+  --sky-warm:  oklch(89% 0.05 78);
+  --sky-dusk:  oklch(38% 0.078 42);
+  --sky-night: var(--color-night);
+  --es-gap: var(--space-md);
+  padding: 0;
+}
+
+.es__pin {
+  position: relative;
+  display: flex; flex-direction: column;
+  padding: var(--space-3xl) 0;
+  overflow: hidden;
+  transition: color var(--dur-slow) var(--ease-out);
+}
+.es__sky, .es__sky i { position: absolute; inset: 0; }
+.es__sky { z-index: 0; pointer-events: none; }
+.es__sky i { opacity: 0; }
+.es.is-live .es__sky i { will-change: opacity; }
+.es__sky-warm  { background: var(--sky-warm); }
+.es__sky-dusk  { background: var(--sky-dusk); }
+.es__sky-night { background: var(--sky-night); }
+
+/* 手机：rail 摊平，标题 → 进度 → 横滑照片 */
+.es__rail { display: contents; }
+.es__intro, .es__hud, .es__track { position: relative; z-index: 1; }
+.es__intro { order: 1; }
+.es__lede { padding: 0 var(--gutter); font-size: var(--text-lg); line-height: 2; letter-spacing: .14em; color: var(--color-ink-2); transition: color var(--dur-slow) var(--ease-out); }
+.ch--essay .ch-head { margin-bottom: var(--space-lg); }
+
+.es__hud {
+  order: 2;
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: var(--space-xl) var(--gutter) var(--space-md);
+  font-size: var(--text-sm); letter-spacing: .3em;
+}
+.es__hud-time { white-space: nowrap; min-width: 4.5em; color: var(--color-accent); transition: color var(--dur-slow) var(--ease-out); }
+.es__hud-bar { position: relative; flex: 1; height: 1px; background: currentColor; opacity: .5; }
+.es__hud-bar i { position: absolute; inset: 0; background: var(--color-accent); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+
+.es__track {
+  order: 3;
+  display: flex; align-items: flex-start; gap: var(--es-gap);
+  overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+.es__track::-webkit-scrollbar { display: none; }
+.es__frame { flex: none; width: 84%; scroll-snap-align: start; }
+.es__frame.is-land { width: calc(100% - 2rem); }
+.es__end { flex: none; width: 1px; }
+.es__shot { display: block; width: 100%; }
+.es__img { width: 100%; height: auto; border-radius: var(--radius-sm); }
+.es__frame figcaption { display: grid; gap: var(--space-3xs); padding-top: var(--space-sm); }
+.es__time { font-size: var(--text-xs); letter-spacing: .4em; color: var(--color-accent); transition: color var(--dur-slow) var(--ease-out); }
+.es__cap { font-size: var(--text-base); line-height: 1.7; letter-spacing: .08em; }
+
+/* 天黑以后：文字换夜色 */
+.es.is-dark .es__pin { color: var(--color-night-ink); }
+.es.is-dark .es__lede { color: var(--color-night-muted); }
+.es.is-dark .es__time,
+.es.is-dark .es__hud-time,
+.es.is-dark .ch-no { color: var(--color-night-accent); }
+.es.is-dark .es__hud-bar i { background: var(--color-night-accent); }
+.es.is-dark :focus-visible { outline-color: var(--color-night-accent); }
+
+@media (min-width: 40rem) {
+  .es__frame { width: 46%; }
+  .es__frame.is-land { width: 72%; }
+}
+
+/* 电脑端：钉住，竖向滚动推着整条横移 */
+@media (min-width: 60rem) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ch--essay { --fh: min(60vh, 640px); --es-gap: 6vw; }
+  .es { height: calc(100vh + var(--n) * 55vw); }
+  .es__pin {
+    position: sticky; top: 0;
+    height: 100vh; height: 100dvh;
+    padding: 0;
+    display: block;
+  }
+  .es__rail {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: var(--es-gap);
+    width: max-content; height: 100%;
+    padding-left: var(--gutter);
+    will-change: transform;
+  }
+  .es__intro { flex: none; width: min(34vw, 520px); }
+  .es__intro .ch-head { padding: 0; }
+  .es__lede { padding: 0; font-size: var(--text-xl); }
+  .es__track { display: flex; overflow: visible; padding: 0; scroll-snap-type: none; }
+  .es__frame, .es__frame.is-land { width: calc(var(--fh) * var(--ar)); }
+  .es__img { height: var(--fh); width: auto; }
+  .es__frame figcaption { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: var(--space-md); padding-top: var(--space-md); }
+  .es__cap { font-size: var(--text-lg); }
+  .es__time { font-size: var(--text-sm); }
+  .es__end { width: calc(var(--gutter) * 2); }
+  .es__hud {
+    position: absolute; z-index: 2;
+    left: var(--gutter); right: var(--gutter); bottom: var(--space-xl);
+    padding: 0;
+  }
+}
+
+/* 减少动态：电脑端也用原生横滑，底色不随滚动变 */
+@media (prefers-reduced-motion: reduce) {
+  .es__sky i { transition: none; }
+}

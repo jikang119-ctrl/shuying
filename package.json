@@ -1,0 +1,11 @@
+{
+  "name": "shuying",
+  "private": true,
+  "description": "疏影：康康和艺菡的第一个秋天",
+  "type": "module",
+  "scripts": {
+    "photos": "python tools/images.py",
+    "build": "node tools/build.mjs && python tools/fonts.py",
+    "serve": "python -m http.server 8810 --bind 127.0.0.1 --directory site"
+  }
+}
