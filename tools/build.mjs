@@ -27,9 +27,9 @@ const src = (id, w) => {
 const srcset = (id) => photo(id).sizes.map((w) => `photos/${id}-${w}.webp ${w}w`).join(', ');
 
 // <img>：带 srcset、宽高（防跳动）、16px 模糊底图（加载前先看到颜色和轮廓）
-function img(id, { sizes = '100vw', cls = '', eager = false, alt = '', attrs = '' } = {}) {
+function img(id, { sizes = '100vw', cls = '', eager = false, alt = '', attrs = '', pos = '' } = {}) {
   const p = photo(id);
-  return `<img${cls ? ` class="${cls}"` : ''} src="${src(id, 960)}" srcset="${srcset(id)}" sizes="${sizes}" width="${p.w}" height="${p.h}" alt="${esc(alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"${eager ? ' fetchpriority="high"' : ''} style="background-color:${p.color};background-image:url(${p.lqip})" data-photo="${id}"${attrs ? ' ' + attrs : ''}>`;
+  return `<img${cls ? ` class="${cls}"` : ''} src="${src(id, 960)}" srcset="${srcset(id)}" sizes="${sizes}" width="${p.w}" height="${p.h}" alt="${esc(alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"${eager ? ' fetchpriority="high"' : ''} style="background-color:${p.color};background-image:url(${p.lqip})${pos ? `;object-position:${pos}` : ''}" data-photo="${id}"${pos ? ` data-focus="${pos}"` : ''}${attrs ? ' ' + attrs : ''}>`;
 }
 
 // 全角空格是白描里的停顿：停顿之间的词组不折行，只在停顿处换行

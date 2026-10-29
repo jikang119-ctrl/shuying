@@ -13,7 +13,7 @@ export function bookmark(story, { esc }) {
 export function cover(story, { esc, img }) {
   const c = story.cover;
   return `<header class="cover" id="cover" data-module="develop" data-develop="cover">
-  <div class="cover__photo">${img(c.photo, { eager: true, alt: '我们两个' })}</div>
+  <div class="cover__photo">${img(c.photo, { eager: true, alt: c.alt, pos: c.focus })}</div>
   <div class="cover__paper"></div>
   <canvas class="cover__canvas" aria-hidden="true"></canvas>
   <div class="cover__veil"></div>
@@ -35,7 +35,7 @@ export function finale(story, { esc, img, lines }) {
   const f = story.finale;
   return `<section class="finale night" id="finale" data-chapter="尾声" data-night>
   <div class="finale__stage" data-module="develop" data-develop="finale">
-    ${img(f.photo, { alt: '两个影子' })}
+    ${img(f.photo, { alt: f.alt, pos: f.focus })}
     <div class="finale__dark"></div>
     <canvas class="finale__canvas" aria-hidden="true"></canvas>
     <p class="finale__hint"><span class="hint-fine">在黑里移动鼠标</span><span class="hint-coarse">在黑里擦一擦</span></p>

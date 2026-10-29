@@ -51,10 +51,11 @@ function start(el, { img, canvas, host, opt, done }) {
   bctx.fillRect(0, 0, 64, 64);
 
   // 按 object-fit: cover 的方式算出照片在画布上的位置，和底下的 <img> 对齐
+  const [fx, fy] = (img.dataset.focus || '50% 50%').split(' ').map((v) => parseFloat(v) / 100);
   const fit = (w, h) => {
     const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
     const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
-    return [(w - dw) / 2, (h - dh) / 2, dw, dh];
+    return [(w - dw) * fx, (h - dh) * fy, dw, dh];
   };
 
   function makeSepia() {
@@ -123,7 +124,7 @@ function start(el, { img, canvas, host, opt, done }) {
   // 没人碰时，几道慢慢游走的光，像药水在纸上晃
   const walkers = Array.from({ length: opt.ambient }, (_, i) => ({ p: Math.random() * 6.28, q: Math.random() * 6.28, s: 0.00022 + i * 0.00007 }));
 
-  let t0 = 0, elapsed = 0, finished = false, idleFrames = 0;
+  let t0 = 0, elapsed = 0, finished = false, idleFrames = 0, half = false;
   const L = loop((now, dt) => {
     if (!t0) t0 = now;
     elapsed += dt;
@@ -144,6 +145,8 @@ function start(el, { img, canvas, host, opt, done }) {
     fctx.drawImage(wet, 0, 0);
     fctx.globalAlpha = 1;
 
+    // 显到三分之一，照片已经比纸深了，字换成浅色
+    if (k > 0.33 && !half) { half = true; host.classList.add('is-half'); }
     if (coarse && (++frame & 1) && k < 1) return true;
     const [dx, dy, dw, dh] = fit(W, H);
     ctx.globalCompositeOperation = 'copy';

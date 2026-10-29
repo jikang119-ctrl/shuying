@@ -193,14 +193,14 @@ a { color: inherit; }
 .cover__paper { position: absolute; inset: 0; background: var(--color-paper-2) url(../img/grain.png); background-size: 180px; }
 .cover__canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
 .cover__veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, var(--color-scrim), transparent 55%); opacity: 0; transition: opacity 1.6s var(--ease-out); }
-.cover.is-developed .cover__veil { opacity: 1; }
+.cover.is-half .cover__veil, .cover.is-developed .cover__veil { opacity: 1; }
 .cover__text {
   position: absolute; left: var(--gutter); right: var(--gutter); bottom: max(var(--space-2xl), env(safe-area-inset-bottom));
   display: grid; gap: var(--space-sm); pointer-events: none;
   color: var(--color-ink);
   transition: color 1.6s var(--ease-out);
 }
-.cover.is-developed .cover__text { color: var(--color-night-ink); }
+.cover.is-half .cover__text, .cover.is-developed .cover__text { color: var(--color-night-ink); }
 .cover__title { font-size: var(--text-display); font-weight: 600; line-height: 1; letter-spacing: .08em; }
 .cover__sub { font-size: var(--text-lg); letter-spacing: .2em; }
 .cover__line { font-size: var(--text-sm); letter-spacing: .3em; opacity: .8; }
@@ -209,7 +209,7 @@ a { color: inherit; }
   font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-muted);
   transition: opacity var(--dur-long) var(--ease-out);
 }
-.cover.is-developed .cover__hint { opacity: 0; }
+.cover.is-half .cover__hint, .cover.is-developed .cover__hint { opacity: 0; }
 .cover__scroll {
   position: absolute; right: var(--gutter); bottom: max(var(--space-2xl), env(safe-area-inset-bottom));
   writing-mode: vertical-rl; font-size: var(--text-xs); letter-spacing: .5em;
@@ -246,6 +246,9 @@ a { color: inherit; }
 .finale { position: relative; min-height: 100svh; display: grid; align-content: end; overflow: hidden; padding: 0; }
 .finale__stage { position: relative; height: 92svh; min-height: 30rem; overflow: hidden; }
 .finale__stage img { width: 100%; height: 100%; object-fit: cover; }
+.finale__stage::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to left, var(--color-scrim), transparent 55%); opacity: 0; transition: opacity 1.6s var(--ease-out); }
+.finale.is-developed .finale__stage::after { opacity: 1; }
+.finale__poem, .finale__hint { z-index: 2; }
 .finale__dark { position: absolute; inset: 0; background: var(--color-night); }
 .finale__canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
 .finale__poem {
