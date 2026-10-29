@@ -10,6 +10,8 @@ const read = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
 const story = read('content/story.json');
 const manifest = read('site/photos/manifest.json');
 const map = read('content/map.json');
+const chatDays = fs.existsSync(path.join(ROOT, 'content', 'chat-days.json')) ? read('content/chat-days.json') : { until: '', days: {} };
+for (const ch of story.chapters) if (ch.kind === 'clock') ch._chat = chatDays;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -64,7 +66,7 @@ const chapters = [];
 for (const ch of story.chapters) chapters.push(await render(ch));
 
 // 每章自己的 css 有就链上
-const cssFiles = ['base', ...new Set(story.chapters.map((c) => c.kind)), 'lightbox']
+const cssFiles = ['base', ...new Set(story.chapters.map((c) => c.kind)), 'lightbox', 'reply']
   .filter((n) => fs.existsSync(path.join(ROOT, 'site', 'assets', 'css', `${n}.css`)));
 const ver = Date.now().toString(36);
 

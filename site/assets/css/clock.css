@@ -89,8 +89,43 @@
 .tally__row dd.is-past .num { color: var(--color-muted); }
 .tally__row dd.is-today { color: var(--color-accent); }
 
+/* ---------- 往回拨 ---------- */
+.dial-wrap { display: grid; justify-items: center; gap: var(--space-md); }
+.dial { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.dial.is-grab { cursor: grabbing; }
+.dial:focus-visible { outline-offset: 6px; }
+.hands { position: absolute; inset: 0; pointer-events: none; }
+.hands.is-return { transition: transform 900ms var(--ease-out); }
+.dial__pick { opacity: 0; transition: opacity var(--dur-short) var(--ease-out); }
+.dial__pick line { stroke: var(--color-ink); stroke-width: 2; }
+.dial__pick circle { fill: var(--color-ink); }
+.clock.is-then .dial__pick { opacity: 1; }
+.dial__hint { font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-muted); white-space: nowrap; transition: opacity var(--dur-short) var(--ease-out); }
+.clock.is-then .dial__hint { opacity: 0; }
+
+.clock.is-then .tally__run, .clock.is-then .tally__lists { display: none; }
+.clock.is-then .tally__n { color: var(--color-accent); }
+.then { display: grid; gap: var(--space-md); justify-items: start; min-height: 16rem; align-content: start; }
+.then[hidden] { display: none; }
+.then__date { font-size: var(--text-xl); letter-spacing: .15em; }
+.then__events { display: grid; gap: var(--space-3xs); }
+.then__events li { font-size: var(--text-lg); letter-spacing: .08em; }
+.then__chat { color: var(--color-ink-2); line-height: 2; letter-spacing: .08em; }
+.then__chat[hidden] { display: none; }
+.then__chat .num { font-size: 1.6rem; font-weight: 500; color: var(--color-accent); margin: 0 .15em; }
+.then__photo[hidden] { display: none; }
+.then__photo img { width: min(100%, 14rem); aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-sm); background: var(--color-paper-2); }
+.then__back {
+  min-height: 44px; padding: 0 var(--space-lg); margin-top: var(--space-xs);
+  border: var(--rule); border-radius: var(--radius-sm);
+  letter-spacing: .3em; white-space: nowrap;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+.then__back:hover { border-color: var(--color-muted); }
+.then__back:active { transform: translateY(1px); }
+
 @media (min-width: 60rem) {
-  .clock { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: var(--space-3xl); }
+  .clock { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; column-gap: var(--space-3xl); }
   .dial { width: min(100%, 32rem); }
   .tally__lists { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--space-xl); }
 }

@@ -1,5 +1,5 @@
 # 《疏影》nginx 站点配置。由 deploy/install.sh 生成到 /etc/nginx/conf.d/shuying.conf
-# __PASSCODE__ / __ROOT__ / __PORT__ 由 install.sh 替换，别手改模板里的占位符。
+# __PASSCODE__ / __ROOT__ / __PORT__ / __API_PORT__ 由 install.sh 替换，别手改模板里的占位符。
 
 # 进门的四位数存在 cookie「shuying」里，和这里对上才放行
 map $cookie_shuying $shuying_ok {
@@ -12,6 +12,8 @@ map $shuying_ok $shuying_gate_key {
     1 "";
 }
 limit_req_zone $shuying_gate_key zone=shuying_gate:1m rate=10r/m;
+# 寄信和读信：不管进没进门都按 IP 限速
+limit_req_zone $binary_remote_addr zone=shuying_post:1m rate=6r/m;
 limit_req_status 429;
 
 server {
@@ -24,6 +26,8 @@ server {
     add_header X-Robots-Tag "noindex, nofollow" always;
     add_header Referrer-Policy "no-referrer" always;
     add_header X-Content-Type-Options "nosniff" always;
+
+    client_max_body_size 16k;
 
     gzip on;
     gzip_comp_level 5;
@@ -77,6 +81,26 @@ server {
         add_header Cache-Control "no-cache";
         try_files /index.html =404;
     }
+    # 回信：寄信要进门；读信还要读信码（后端核对）
+    location = /api/letters {
+        limit_req zone=shuying_post burst=3 nodelay;
+        try_files /.shuying-no-such-file @api;
+    }
+    location = /api/inbox {
+        limit_req zone=shuying_post burst=5 nodelay;
+        try_files /.shuying-no-such-file @api;
+    }
+    location @api {
+        if ($shuying_ok = 0) { return 403; }
+        proxy_pass http://127.0.0.1:__API_PORT__;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 10s;
+    }
+    location = /inbox.html {
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
+    }
+
     location / {
         return 404;
     }

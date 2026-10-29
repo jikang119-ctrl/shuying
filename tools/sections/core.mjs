@@ -45,5 +45,29 @@ export function finale(story, { esc, img, lines }) {
     <p class="finale__lines">${lines(f.lines, 'ln rv')}</p>
     <p class="finale__sign">${esc(f.sign)}</p>
   </div>
+  ${reply(story, { esc })}
 </section>`;
+}
+
+// 尾声最后：她可以给我回信。信寄到服务器（server/letters.py），只有我能看。
+function reply(story, { esc }) {
+  const r = story.reply;
+  if (!r) return '';
+  return `<div class="reply" data-module="reply">
+    <h3 class="reply__title">${esc(r.title)}</h3>
+    <p class="reply__hint">${esc(r.hint)}</p>
+    <form class="reply__form" novalidate>
+      <label class="sr-only" for="reply-text">${esc(r.title)}</label>
+      <textarea class="reply__paper" id="reply-text" name="text" rows="7" maxlength="2000" placeholder="${esc(r.placeholder)}"></textarea>
+      <div class="reply__bar">
+        <span class="reply__count num" aria-hidden="true">0 / 2000</span>
+        <button class="reply__send" type="submit" disabled>寄出</button>
+      </div>
+      <p class="reply__status" role="status"></p>
+    </form>
+    <div class="reply__sent" hidden>
+      <p class="reply__sent-head">你寄出的</p>
+      <ol class="reply__list"></ol>
+    </div>
+  </div>`;
 }

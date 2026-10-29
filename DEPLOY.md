@@ -1,6 +1,6 @@
 # 部署到阿里云 ECS（给接手的 AI / 康康自己）
 
-纯静态站，nginx 直接发文件，服务器上不需要 Node / Python。整个过程大约 5 分钟。
+网站本身是静态的，nginx 直接发文件；另有一个只用 Python 标准库的小后端收「回信」（Ubuntu 自带 python3，不用装包）。整个过程大约 5 分钟。
 
 ## 服务器
 
@@ -61,9 +61,11 @@ cd ~/shuying
 PASSCODE=0828 bash deploy/install.sh
 ```
 
-脚本会做：装 nginx → 检查 80 端口有没有被别的程序占 → 把 `site/` 拷到 `/var/www/shuying` → 生成 `/etc/nginx/conf.d/shuying.conf` → `nginx -t` → 重载 → 自检。
+脚本会做：装 nginx / python3 → 检查 80 端口有没有被别的程序占 → 把 `site/` 拷到 `/var/www/shuying` → 装回信后端（systemd 服务 `shuying-letters`）→ 生成 `/etc/nginx/conf.d/shuying.conf` → `nginx -t` → 重载 → 自检。
 
-最后一行打印「部署好了：http://8.163.12.169/」就成功了。自检三项必须是 `302 / 204 / 200`。
+最后打印「部署好了：http://8.163.12.169/」和「收信页 + 读信码」就成功了。自检四项必须是 `302 / 204 / 200 / 200`。
+
+**读信码要记下来**：第一次装会随机生成 6 位数并打印出来，以后重跑脚本会沿用（存在 `/etc/shuying/letters.env`）。想自己定就加 `ADMIN_CODE=xxxxxx`。
 
 - 80 端口被占（脚本会停下并打印占用的程序）：换端口 `PORT=8080 PASSCODE=0828 bash deploy/install.sh`，安全组也放行 8080。
 - `PASSCODE` 是进门的四位数，默认 `0828`（认识那天）。想换就换，只能是 4 位数字。
@@ -84,6 +86,20 @@ PASSCODE=0828 bash deploy/install.sh
 2. 封面照片像冲洗一样慢慢显出来，手指擦过的地方先显
 3. 一路往下翻到「尾声」，横滑的几章都能左右划
 
+## 回信（她写给你的信）
+
+- 她在尾声最下面「给我回一封信」写完点「寄出」，信存到服务器 `/var/lib/shuying/letters.jsonl`（一行一封）
+- 你看信：手机打开 `http://8.163.12.169/inbox.html`，输读信码。这台手机要先在首页输过四位数
+- 她那边只看得到自己这台手机上寄出过的信；换手机就看不到，别人也看不到
+- 想来信时飞书提醒（可选）：飞书里建一个只有你的群 → 设置 → 群机器人 → 添加机器人 → 自定义机器人 → 复制 webhook 地址，然后重跑一次：
+
+  ```bash
+  FEISHU_WEBHOOK='https://open.feishu.cn/open-apis/bot/v2/hook/xxxx' PASSCODE=0828 bash deploy/install.sh
+  ```
+
+- 备份：`cp /var/lib/shuying/letters.jsonl ~/letters-$(date +%F).jsonl`（更新站点不会动这个文件）
+- 后端日志：`journalctl -u shuying-letters -n 50 --no-pager`（只记请求和状态码，不记信的内容）
+
 ## 以后更新内容
 
 本机改完、push 之后，在服务器上：
@@ -101,6 +117,9 @@ rm /etc/nginx/conf.d/shuying.conf
 cp -a /root/nginx-default-site.bak /etc/nginx/sites-enabled/default   # 脚本停用过 default 站点才有这个备份
 nginx -t && systemctl reload nginx
 rm -rf /var/www/shuying
+systemctl disable --now shuying-letters
+rm -f /etc/systemd/system/shuying-letters.service && systemctl daemon-reload
+rm -rf /opt/shuying /etc/shuying          # 信在 /var/lib/shuying，确定不要了再删
 ```
 
 ## 风险和限制
@@ -111,4 +130,5 @@ rm -rf /var/www/shuying
 | 微信内置浏览器可能拦裸 IP 链接 | 发给她的链接在微信里点开可能提示「无法打开」或「非官方网页」 | 让她长按复制，用 Safari 打开；或者把链接存成手机桌面书签 |
 | 只有 HTTP，没有 HTTPS | 进门数字以明文 cookie 传输；这是一扇门不是保险柜 | 有域名并备案后再上 HTTPS（certbot） |
 | 按流量计费 | 首次完整看一遍约 6–10 MB（照片都是压过的 WebP，按屏幕大小只取需要的那一档）；乱试密码的请求会被限速 | 控制台设一个费用预警 |
+| 信是明文存在服务器上 | 能登服务器的人（root）都能看到 | 服务器密码别外借；定期把 letters.jsonl 备份到本机 |
 | 密码只有 4 位 | 没进门的 IP 每分钟最多试 10 次（nginx 限速，本机实测连试几次后返回 429，带对密码的请求不受影响），挨个试完要十几个小时 | 想更稳就换成更长的数字串，`lock.html` 里 `maxlength` 和格子数要一起改 |

@@ -103,8 +103,161 @@ export function init(el) {
   };
 
   update();
+  scrub(el, { since, bjDay, still });
   onScreen(el, (v) => (v ? start() : stop()));
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && timer) { sync(); update(); }
   });
+}
+
+
+// ---- 拨表盘回到那一天 ----
+// 按住表盘转：外圈 365 格，一格一天。拨到哪天，右边就换成那天的日期、发生的事、那天聊了多少。
+// 拨的时候时针分针跟着倒转；点「回到今天」再转回来。
+const WEEK = '日一二三四五六';
+const fmt = (n) => n.toLocaleString('en-US');
+
+function scrub(el, { since, bjDay, still }) {
+  const root = el.querySelector('.clock');
+  const dial = el.querySelector('.dial');
+  const data = JSON.parse(el.querySelector('.clock-data').textContent);
+  const pick = dial.querySelector('.dial__pick');
+  const wraps = { h: dial.querySelector('[data-hands="h"]'), m: dial.querySelector('[data-hands="m"]') };
+  const then = el.querySelector('.then');
+  const out = {
+    n: el.querySelector('[data-day]'),
+    date: then.querySelector('.then__date'),
+    events: then.querySelector('.then__events'),
+    chat: then.querySelector('.then__chat'),
+    fig: then.querySelector('.then__photo'),
+    img: then.querySelector('.then__photo img'),
+  };
+  const back = then.querySelector('.then__back');
+  const start0 = Date.parse(`${data.start}T00:00:00+08:00`);
+  const firstChat = Object.keys(data.chat)[0] || '9999';
+  const todayN = () => bjDay(Date.now()) - bjDay(since) + 1;
+
+  let dayF = 0, shown = 0, lastA = null, active = false;
+
+  const iso = (n) => new Date(start0 + (n - 1) * DAY + OFF).toISOString().slice(0, 10);
+  let box = null;   // 按下时记住表盘位置，拖的过程中不再读布局
+  const angleOf = (e) => {
+    const r = box || dial.getBoundingClientRect();
+    const a = Math.atan2(e.clientX - (r.left + r.width / 2), -(e.clientY - (r.top + r.height / 2))) * 180 / Math.PI;
+    return a < 0 ? a + 360 : a;
+  };
+
+  function render(n) {
+    const day = iso(n);
+    const [y, m, d] = day.split('-').map(Number);
+    const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+    const md = `${m}月${d}日`;
+    out.n.textContent = n;
+    out.date.textContent = `${y === 2026 ? '' : y + '年'}${md}　周${WEEK[wd]}`;
+    const ev = data.events[day] || [];
+    out.events.replaceChildren(...ev.map((line) => Object.assign(document.createElement('li'), { textContent: line })));
+
+    const k = n - todayN();
+    const c = data.chat[day];
+    let chat = '';
+    if (k > 0) chat = `还有 <span class="num">${k}</span> 天`;
+    else if (k === 0) chat = '就是今天';
+    else if (day < firstChat) chat = '那时候还没加微信　在小红书上聊';
+    else if (c) {
+      const [hh, mm] = (c.last || '0:0').split(':').map(Number);
+      const late = c.last ? (hh < 5 ? `聊到凌晨 ${hh}:${String(mm).padStart(2, '0')}` : `聊到 ${c.last}`) : '';
+      chat = `那天${c.by === 'them' ? '你' : '我'}先开口<br>我们说了 <span class="num">${fmt(c.n)}</span> 句话${late ? '　' + late : ''}`;
+    }
+    out.chat.innerHTML = chat;
+    out.chat.hidden = !chat;
+
+    const src = data.photos[day];
+    out.fig.hidden = !src;
+    if (src && out.img.getAttribute('src') !== src) out.img.src = src;
+
+    pick.setAttribute('transform', `rotate(${(((n - 1) * 360) / 365).toFixed(2)} 200 200)`);
+    dial.setAttribute('aria-valuenow', n);
+    dial.setAttribute('aria-valuetext', `第 ${n} 天，${md}${ev.length ? '，' + ev.join('，') : ''}`);
+  }
+
+  // 时针分针跟着倒转：差几天，分针就多转几圈
+  function rewind(f) {
+    if (still) return;
+    const D = f - todayN();
+    wraps.m.style.transform = `rotate(${(D * 360).toFixed(1)}deg)`;
+    wraps.h.style.transform = `rotate(${(D * 30).toFixed(1)}deg)`;
+  }
+
+  function set(f) {
+    dayF = Math.max(1, Math.min(365, f));
+    const n = Math.round(dayF);
+    if (!active) {
+      active = true;
+      root.classList.add('is-then');
+      then.hidden = false;
+      for (const w of Object.values(wraps)) w.classList.remove('is-return');
+    }
+    rewind(dayF);
+    if (n !== shown) { shown = n; render(n); }
+  }
+
+  function reset() {
+    if (!active) return;
+    active = false; shown = 0; lastA = null;
+    root.classList.remove('is-then');
+    then.hidden = true;
+    out.n.textContent = todayN();
+    dial.removeAttribute('aria-valuenow');
+    dial.removeAttribute('aria-valuetext');
+    // 先把角度折回半圈以内，再转回 0，别一口气倒转几十圈
+    for (const w of Object.values(wraps)) {
+      const a = parseFloat((w.style.transform.match(/-?[\d.]+/) || [0])[0]);
+      const r = ((a % 360) + 540) % 360 - 180;
+      w.classList.remove('is-return');
+      w.style.transform = `rotate(${r}deg)`;
+      void w.offsetWidth;
+      w.classList.add('is-return');
+      w.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // 拖动：自己记住是哪根手指在拖，在 window 上跟，不依赖 pointer capture（有的浏览器会中途丢掉）
+  let dragId = null;
+  dial.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragId = e.pointerId;
+    try { dial.setPointerCapture(e.pointerId); } catch { /* 拿不到也照样能拖 */ }
+    dial.classList.add('is-grab');
+    box = dial.getBoundingClientRect();
+    const a = angleOf(e);
+    lastA = a;
+    // 按下的位置就是那一天：12 点方向是 08.28，顺时针一格一天
+    set((a / 360) * 365 + 1);
+  });
+  addEventListener('pointermove', (e) => {
+    if (e.pointerId !== dragId) return;
+    if (e.pointerType === 'mouse' && e.buttons === 0) { end(e); return; }
+    const a = angleOf(e);
+    let d = a - lastA;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    lastA = a;
+    set(dayF + (d / 360) * 365);
+  }, { passive: true });
+  function end(e) {
+    if (e.pointerId !== dragId) return;
+    dragId = null; lastA = null; box = null;
+    dial.classList.remove('is-grab');
+  }
+  addEventListener('pointerup', end, { passive: true });
+  addEventListener('pointercancel', end, { passive: true });
+
+  dial.addEventListener('keydown', (e) => {
+    const cur = active ? Math.round(dayF) : todayN();
+    const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -7, PageUp: 7 }[e.key];
+    if (step) { e.preventDefault(); set(cur + step); }
+    else if (e.key === 'Home') { e.preventDefault(); set(1); }
+    else if (e.key === 'End' || e.key === 'Escape') { e.preventDefault(); reset(); }
+  });
+  back.addEventListener('click', () => { reset(); dial.focus({ preventScroll: true }); });
 }

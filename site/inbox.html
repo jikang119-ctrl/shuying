@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f3eee6">
+<title>收信</title>
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/base.css">
+<style>
+  /* 收信页：只有康康用。先输读信码，再列出她寄来的信，新的在上面 */
+  body { min-height: 100svh; }
+  .inbox { width: min(40rem, 100%); margin: 0 auto; padding: max(var(--space-2xl), env(safe-area-inset-top)) var(--gutter) var(--space-4xl); display: grid; gap: var(--space-xl); }
+  .inbox__title { font-size: var(--text-3xl); font-weight: 600; letter-spacing: .12em; line-height: 1; }
+  .inbox__meta { color: var(--color-muted); font-size: var(--text-sm); letter-spacing: .25em; }
+  .gate { display: flex; gap: var(--space-sm); align-items: center; flex-wrap: wrap; }
+  .gate input { flex: 1 1 10rem; min-width: 0; min-height: 48px; padding: 0 var(--space-sm); border: 0; border-bottom: var(--rule); background: none; font-family: var(--font-num); font-size: 1.6rem; letter-spacing: .2em; color: var(--color-ink); border-radius: 0; }
+  .gate input:focus-visible { outline: none; border-bottom-color: var(--color-accent); }
+  .btn { min-height: 48px; padding: 0 var(--space-lg); border: var(--rule); border-radius: var(--radius-sm); letter-spacing: .3em; white-space: nowrap; transition: border-color var(--dur-short) var(--ease-out); }
+  .btn:hover { border-color: var(--color-muted); }
+  .btn:active { transform: translateY(1px); }
+  .btn[aria-busy="true"] { opacity: .6; }
+  .status { min-height: 1.9em; font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-muted); }
+  .status.is-error { color: var(--color-accent); }
+  .letters { display: grid; border-top: var(--rule); }
+  .letter { padding: var(--space-xl) 0; border-bottom: var(--rule); display: grid; gap: var(--space-sm); }
+  .letter__when { font-family: var(--font-num); font-size: 1.25rem; color: var(--color-accent); font-variant-numeric: lining-nums tabular-nums; letter-spacing: .04em; }
+  .letter__body { font-family: var(--font-cn-system); font-size: var(--text-lg); line-height: 2; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .empty { color: var(--color-muted); letter-spacing: .2em; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="inbox">
+  <header>
+    <h1 class="inbox__title">收信</h1>
+  </header>
+  <form class="gate" novalidate>
+    <label class="sr-only" for="code">读信码</label>
+    <input id="code" name="code" inputmode="numeric" autocomplete="off" placeholder="读信码">
+    <button class="btn" type="submit">打开</button>
+  </form>
+  <p class="status" role="status"></p>
+  <p class="inbox__meta" hidden></p>
+  <ol class="letters" hidden></ol>
+  <p class="empty" hidden>还没有信</p>
+</main>
+<script>
+  const $ = (s) => document.querySelector(s);
+  const form = $('.gate'), status = $('.status'), list = $('.letters'), meta = $('.inbox__meta'), empty = $('.empty');
+  const btn = form.querySelector('button');
+  const fmt = (iso) => { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/); return m ? `${m[1]}.${m[2]}.${m[3]}  ${m[4]}:${m[5]}` : iso; };
+  const say = (t, err) => { status.textContent = t; status.classList.toggle('is-error', !!err); };
+
+  async function load() {
+    btn.setAttribute('aria-busy', 'true');
+    let r;
+    try { r = await fetch('api/inbox', { cache: 'no-store' }); } catch { r = null; }
+    btn.removeAttribute('aria-busy');
+    if (!r) return say('网不太好　再试一次', true);
+    if (r.status === 403) return say('先去首页输入那四个数字，再回来', true);
+    if (r.status === 401) { form.hidden = false; return say(document.cookie.includes('shuying_admin=') ? '读信码不对' : '', !!document.cookie.includes('shuying_admin=')); }
+    if (r.status === 429) return say('试太多次了　过一分钟再来', true);
+    if (!r.ok) return say('服务器没回话', true);
+    const { letters } = await r.json();
+    form.hidden = true; say('');
+    meta.hidden = false; meta.textContent = `一共 ${letters.length} 封`;
+    empty.hidden = letters.length > 0;
+    list.hidden = letters.length === 0;
+    list.replaceChildren(...letters.map((l) => {
+      const li = document.createElement('li'); li.className = 'letter';
+      const w = document.createElement('p'); w.className = 'letter__when'; w.textContent = fmt(l.time);
+      const b = document.createElement('p'); b.className = 'letter__body'; b.textContent = l.text;
+      li.append(w, b); return li;
+    }));
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = form.code.value.trim().replace(/[^0-9A-Za-z_-]/g, '');
+    if (!code) return;
+    document.cookie = `shuying_admin=${code}; path=/; max-age=31536000; SameSite=Strict`;
+    load();
+  });
+  load();
+</script>
+</body>
+</html>

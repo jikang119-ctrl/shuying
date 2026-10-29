@@ -32,6 +32,7 @@ function dialSvg() {
   <circle class="dial__year" cx="200" cy="200" r="190" stroke-dasharray="0.7 ${(step - 0.7).toFixed(4)}" transform="rotate(-90 200 200)"/>
   <circle class="dial__year dial__year--past" cx="200" cy="200" r="190" stroke-dasharray="0 ${ring.toFixed(2)}" transform="rotate(-90 200 200)"/>
   <g class="dial__today"><line x1="200" y1="2" x2="200" y2="17"/></g>
+  <g class="dial__pick"><line x1="200" y1="0" x2="200" y2="24"/><circle cx="200" cy="10" r="4.5"/></g>
   <circle class="dial__enamel" cx="200" cy="200" r="180"/>
   <circle class="dial__chapter" cx="200" cy="200" r="168"/>
   <path class="dial__minutes" d="${minutes}"/>
@@ -41,24 +42,55 @@ function dialSvg() {
 </svg>`;
 }
 
-export default function clock(ch, { esc, section }) {
+// 往回拨用的数据：每天发生的事、那天的照片、那天聊了多少（只有统计，没有原话）
+function scrubData(ch, { story, src }) {
+  const events = {};
+  const add = (iso, line) => (events[iso] ||= []).push(line);
+  const meet = story.chapters.find((c) => c.kind === 'timeline');
+  for (const it of meet?.items || []) {
+    const iso = `2026-${it.date.replace('.', '-')}`;
+    it.lines.forEach((l) => add(iso, l));
+  }
+  for (const n of ch.next) {
+    if (n.yearly) { for (const y of [2026, 2027]) add(`${y}${n.date.slice(4)}`, n.label); }
+    else add(n.date, n.label);
+  }
+  const photos = {};
+  for (const [iso, id] of Object.entries(ch.photosByDate || {})) photos[iso] = src(id, 480);
+  return { start: ch.since.slice(0, 10), events, photos, chat: ch._chat.days, chatUntil: ch._chat.until };
+}
+
+export default function clock(ch, ctx) {
+  const { esc, section } = ctx;
+  const data = JSON.stringify(scrubData(ch, ctx)).replace(/</g, '\\u003c');
   const row = (it, mode) => `<div class="tally__row">
       <dt>${esc(it.label)}</dt>
       <dd data-date="${esc(it.date)}" data-mode="${mode}"${it.yearly ? ' data-yearly' : ''}>—</dd>
     </div>`;
 
   return section(ch, `<div class="clock" data-since="${esc(ch.since)}">
-  <div class="dial" role="img" aria-label="一只表，指针走的是北京时间；外圈 365 道刻度是第一年，走过的天数是暮色的">
+  <script type="application/json" class="clock-data">${data}</script>
+  <div class="dial-wrap">
+  <div class="dial" tabindex="0" role="slider" aria-label="拨到哪一天：外圈 365 道刻度是第一年，走过的天数是暮色的" aria-valuemin="1" aria-valuemax="365">
     ${dialSvg()}
-    <span class="hand hand--h"></span>
-    <span class="hand hand--m"></span>
-    <span class="hand hand--s"><span class="hand__needle"></span><span class="hand__weight"></span></span>
+    <span class="hands" data-hands="h"><span class="hand hand--h"></span></span>
+    <span class="hands" data-hands="m"><span class="hand hand--m"></span></span>
+    <span class="hands" data-hands="s"><span class="hand hand--s"><span class="hand__needle"></span><span class="hand__weight"></span></span></span>
     <span class="dial__cap"></span>
+  </div>
+  <p class="dial__hint"><span class="hint-fine">按住表盘　往回拨</span><span class="hint-coarse">按住表盘　往回拨</span></p>
   </div>
   <div class="tally">
     <p class="tally__since">${esc(ch.sinceLabel)}　那天算第一天</p>
     <p class="tally__day"><span class="tally__unit">第</span><span class="tally__n num" data-day>—</span><span class="tally__unit">天</span></p>
     <p class="tally__run"><span class="tally__label">一起走过</span><span class="tally__hms"><span class="num" data-h>—</span> 小时 <span class="num" data-m>—</span> 分 <span class="num" data-s>—</span> 秒</span></p>
+    <div class="then" hidden aria-live="polite">
+      <p class="then__date"></p>
+      <ul class="then__events"></ul>
+      <p class="then__chat"></p>
+      <figure class="then__photo" hidden><img alt="那天的照片" width="480" height="600" loading="lazy" decoding="async"></figure>
+      <button class="then__back" type="button">回到今天</button>
+    </div>
     <div class="tally__lists">
       <div><p class="tally__head">走过的</p><dl class="tally__list">${ch.marks.map((m) => row(m, 'since')).join('')}</dl></div>
       <div><p class="tally__head">接下来</p><dl class="tally__list">${ch.next.map((n) => row(n, 'until')).join('')}</dl></div>

@@ -1,0 +1,59 @@
+/* 尾声最后的回信：深色信纸，横线和行高对齐。她写的字可能不在裁过的字体里，所以信纸和信里的字用系统宋体。 */
+.reply {
+  --reply-line: 2.25rem;
+  --reply-rule: color-mix(in oklch, var(--color-night-ink) 12%, transparent);
+  padding: var(--space-2xl) var(--gutter) max(var(--space-4xl), env(safe-area-inset-bottom));
+  display: grid; gap: var(--space-md);
+  border-top: var(--rule-night);
+}
+.reply__title { font-size: var(--text-2xl); font-weight: 600; letter-spacing: .12em; }
+.reply__hint { color: var(--color-night-muted); font-size: var(--text-sm); letter-spacing: .25em; }
+.reply__form { display: grid; gap: var(--space-sm); margin-top: var(--space-lg); }
+
+.reply__paper {
+  width: 100%; min-height: calc(var(--reply-line) * 7 + var(--space-sm));
+  padding: var(--space-sm) 0 0; resize: vertical;
+  border: 0; border-bottom: var(--rule-night); border-radius: 0;
+  font-family: var(--font-cn-system); font-size: var(--text-lg); line-height: var(--reply-line); letter-spacing: .06em;
+  color: var(--color-night-ink); caret-color: var(--color-night-accent);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--reply-line) - 1px), var(--reply-rule) calc(var(--reply-line) - 1px), var(--reply-rule) var(--reply-line));
+  background-position: 0 var(--space-sm);
+  background-attachment: local;
+  outline: none;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+.reply__paper::placeholder { color: var(--color-night-muted); opacity: 1; }
+.reply__paper:focus-visible { border-bottom-color: var(--color-night-accent); }
+.reply.is-error .reply__paper { border-bottom-color: var(--color-night-accent); }
+
+.reply__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+.reply__count { color: var(--color-night-muted); font-size: var(--text-sm); }
+.reply__send {
+  min-height: 48px; padding: 0 var(--space-xl);
+  border: 1px solid var(--color-night-muted); border-radius: var(--radius-sm);
+  letter-spacing: .4em; white-space: nowrap; color: var(--color-night-ink);
+  transition: border-color var(--dur-short) var(--ease-out), opacity var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+.reply__send:hover:not(:disabled) { border-color: var(--color-night-accent); color: var(--color-night-accent); }
+.reply__send:active:not(:disabled) { transform: translateY(1px); }
+.reply__send:disabled { opacity: .38; cursor: default; }
+.reply__send[aria-busy="true"] { opacity: .6; cursor: progress; }
+.reply__status { min-height: 1.9em; font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-night-muted); }
+.reply.is-done .reply__status { color: var(--color-night-ink); }
+.reply.is-error .reply__status { color: var(--color-night-accent); }
+
+.reply__sent { margin-top: var(--space-xl); display: grid; gap: var(--space-sm); }
+.reply__sent[hidden] { display: none; }
+.reply__sent-head { font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-night-muted); }
+.reply__list { display: grid; border-top: var(--rule-night); }
+.reply__list li { padding: var(--space-md) 0; border-bottom: var(--rule-night); display: grid; gap: var(--space-2xs); }
+.reply__when { font-size: var(--text-xs); letter-spacing: .2em; color: var(--color-night-muted); }
+.reply__body { font-family: var(--font-cn-system); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; color: var(--color-night-ink); }
+
+@media (min-width: 60rem) {
+  .reply { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); column-gap: var(--space-3xl); align-items: start; }
+  .reply__title, .reply__hint { grid-column: 1; }
+  .reply__form, .reply__sent { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
+  .reply__sent { grid-row: auto; }
+}

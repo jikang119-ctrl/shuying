@@ -30,6 +30,8 @@
   --color-scrim: oklch(15% 0.010 45 / 0.55);
 
   --font-cn:  "Shuying Serif", "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  /* 别人写的字（她的回信）不一定在裁过的字体里，用系统宋体，免得一句话里两种字形 */
+  --font-cn-system: "Songti SC", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "SimSun", serif;
   --font-num: "Shuying Num", "Cormorant Garamond", "Baskerville", "Times New Roman", serif;
 
   --space-3xs: .125rem;

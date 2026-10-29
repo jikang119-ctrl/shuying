@@ -1,7 +1,7 @@
 """把思源宋体（Noto Serif SC）和 Cormorant Garamond 裁成只含本站用到的字，输出 woff2。
 
 用法: python tools/fonts.py
-- 扫 site/index.html、site/lock.html、site/assets/js/*.js 里出现的所有字符
+- 扫 site/index.html、lock.html、inbox.html、site/assets/js/*.js 里出现的所有字符
 - 原始字体放在 tools/.fonts/（不进 git），没有就自动从 GitHub 下载
 - 文案改了以后要重跑这一步，否则新字会退回系统宋体
 """
@@ -30,7 +30,7 @@ def ensure():
 
 def chars():
     text = ''
-    files = [os.path.join(ROOT, 'site', 'index.html'), os.path.join(ROOT, 'site', 'lock.html')]
+    files = [os.path.join(ROOT, 'site', n) for n in ('index.html', 'lock.html', 'inbox.html')]
     files += glob.glob(os.path.join(ROOT, 'site', 'assets', 'js', '*.js'))
     for f in files:
         if os.path.exists(f):
