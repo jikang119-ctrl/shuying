@@ -44,8 +44,13 @@ if ss -ltnp "sport = :$PORT" | grep -v nginx | grep -q LISTEN; then
 fi
 
 echo "== 3/6 拷贝站点到 $ROOT"
-mkdir -p "$ROOT"
-rsync -a --delete "$HERE/site/" "$ROOT/" 2>/dev/null || { rm -rf "${ROOT:?}"/*; cp -a "$HERE/site/." "$ROOT/"; }
+mkdir -p "$ROOT" "$ROOT/music"
+# music/ 是单独传上来的歌（不在仓库里），更新站点时不能删
+rsync -a --delete --exclude '/music/' "$HERE/site/" "$ROOT/" 2>/dev/null || {
+  find "${ROOT:?}" -mindepth 1 -maxdepth 1 ! -name music -exec rm -rf {} +
+  cp -a "$HERE/site/." "$ROOT/"
+}
+echo "唱片柜里的歌：$(find "$ROOT/music" -name '*.m4a' | wc -l) 首（没有的话按 DEPLOY.md「唱片柜」一节传上来）"
 chown -R www-data:www-data "$ROOT"
 find "$ROOT" -type d -exec chmod 755 {} +
 find "$ROOT" -type f -exec chmod 644 {} +

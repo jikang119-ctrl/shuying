@@ -1,0 +1,351 @@
+/* 骑士的唱片柜 —— 一面书架，每张专辑是一本方形的书（黑胶的折页封套）。点开：从架子上抽出来，翻开封面，唱片滑出来。
+ * 暗场延续「七 骑士」那一章：底是 night，唯一的暖色是 night-accent；每本书自己的颜色只用在书上。 */
+
+.mp {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* 内页的纸纹要淡得多，不然暖白的纸会发灰 */
+  --grain-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --page-w: min(84vw, 42vh, 26rem);
+  --player-h: 4.5rem;
+  min-height: 100vh;
+  background: var(--color-night);
+  color: var(--color-night-ink);
+  font-family: var(--font-cn);
+  padding-bottom: calc(var(--player-h) + var(--space-2xl) + env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+}
+/* :where 把重置的优先级压到 0，书脊、按钮自己的底色才盖得住它 */
+:where(.mp) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.mp :focus-visible { outline: 2px solid var(--color-night-accent); outline-offset: 3px; }
+.mp .num { font-family: var(--font-num); font-variant-numeric: lining-nums tabular-nums; }
+
+.mp-back {
+  position: fixed; z-index: 20; top: calc(var(--space-md) + env(safe-area-inset-top)); left: var(--gutter);
+  font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-night-muted); text-decoration: none;
+  padding: var(--space-xs) 0;
+  transition: color var(--dur-short) var(--ease-out);
+}
+.mp-back:hover { color: var(--color-night-ink); }
+
+/* ---------- 抬头 ---------- */
+.mp-head {
+  padding: calc(var(--space-4xl) + env(safe-area-inset-top)) var(--gutter) var(--space-3xl);
+  display: grid; justify-items: start; gap: var(--space-lg);
+  background: radial-gradient(60% 50% at 70% 30%, color-mix(in oklch, var(--color-night-accent) 12%, transparent), transparent 70%);
+}
+.mp-kicker { font-size: var(--text-sm); letter-spacing: .5em; color: var(--color-night-accent); }
+.mp-name { display: flex; gap: .06em; font-size: clamp(4.5rem, 24vw, 10rem); font-weight: 600; line-height: .95; color: transparent; -webkit-text-stroke: 1px var(--color-night-ink); }
+.mp-name span { display: block; }
+.mp-meta { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--text-base); letter-spacing: .15em; color: var(--color-night-muted); }
+.mp-meta .num { font-size: var(--text-lg); letter-spacing: .05em; }
+.mp-sep { width: 1.5rem; height: 1px; background: var(--color-night-rule); }
+
+.lucky {
+  margin-top: var(--space-md);
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-sm);
+  border: var(--rule-night); border-radius: 999px;
+  transition: border-color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+}
+.lucky:hover { border-color: var(--color-night-accent); background: color-mix(in oklch, var(--color-night-accent) 8%, transparent); }
+.lucky:active { transform: translateY(1px); }
+.lucky__disc {
+  width: 3rem; aspect-ratio: 1; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: repeating-radial-gradient(circle, var(--color-night) 0 1px, var(--color-night-2) 1px 2.4px);
+  box-shadow: 0 0 0 1px var(--color-night-rule);
+}
+.lucky__disc span { width: 38%; aspect-ratio: 1; border-radius: 50%; background: var(--color-night-accent); }
+.lucky.is-spin .lucky__disc { animation: disc-spin 1.2s var(--ease-out); }
+.lucky__text { display: grid; text-align: left; gap: .1em; }
+.lucky__label { font-size: var(--text-lg); letter-spacing: .2em; }
+.lucky__hint { font-size: var(--text-xs); letter-spacing: .15em; color: var(--color-night-muted); }
+
+/* ---------- 书架 ---------- */
+.shelf { padding: 0 0 var(--space-3xl); }
+.shelf__head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 var(--gutter) var(--space-lg); }
+.shelf__head h2 { font-size: var(--text-xl); letter-spacing: .3em; }
+.shelf__head p { font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-night-muted); }
+.shelf__scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: var(--gutter); padding: var(--space-xl) 0 0; }
+.shelf__scroll::-webkit-scrollbar { display: none; }
+.shelf__row {
+  display: flex; align-items: flex-end; gap: 3px; width: max-content;
+  padding: 0 var(--gutter);
+  border-bottom: 1px solid var(--color-night-rule);
+  box-shadow: 0 14px 18px -12px oklch(0% 0 0 / .7);
+  min-height: 17rem;
+}
+.shelf__gap { width: var(--space-lg); flex: none; }
+
+.spine {
+  --h: 15rem; --w: 3rem;
+  position: relative; flex: none; scroll-snap-align: start;
+  width: var(--w); height: var(--h);
+  display: grid; grid-template-rows: auto 1fr auto; justify-items: center; align-items: center;
+  padding: var(--space-sm) 0;
+  background:
+    linear-gradient(90deg, oklch(0% 0 0 / .28), transparent 18%, oklch(100% 0 0 / .1) 42%, transparent 60%, oklch(0% 0 0 / .32)),
+    var(--grain),
+    var(--bg);
+  color: var(--ink);
+  border-radius: 2px 2px 0 0;
+  transform-origin: 50% 100%;
+  transition: transform var(--dur-long) var(--ease-out), filter var(--dur-short) var(--ease-out);
+}
+.spine::before, .spine::after { content: ""; position: absolute; left: 0; right: 0; height: 1px; background: currentColor; opacity: .35; }
+.spine::before { top: 2.4rem; }
+.spine::after { bottom: 2.6rem; }
+.spine__no { font-size: var(--text-sm); opacity: .7; }
+.spine__title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-size: var(--text-base); font-weight: 600; letter-spacing: .12em; line-height: 1;
+  max-height: calc(var(--h) - 6.5rem); overflow: hidden; white-space: nowrap;
+}
+.spine__title.is-long { font-size: var(--text-sm); letter-spacing: .06em; }
+.spine__year { font-size: var(--text-sm); writing-mode: vertical-rl; opacity: .8; }
+@media (hover: hover) and (pointer: fine) {
+  .spine:hover { transform: translateY(-.75rem); }
+}
+.spine:active { transform: translateY(-.5rem); }
+.spine.is-out { transform: translateY(-1.25rem); filter: brightness(1.08); }
+.spine.is-playing .spine__no { color: var(--ink); opacity: 1; }
+.spine.is-playing::after { opacity: .9; height: 2px; }
+
+/* ---------- 你说过的那几首 ---------- */
+.picks { padding: 0 var(--gutter); max-width: 44rem; }
+.picks__head { font-size: var(--text-xl); letter-spacing: .3em; margin-bottom: var(--space-lg); }
+.picks__list { border-top: var(--rule-night); }
+.pick {
+  width: 100%; min-height: 3.5rem; text-align: left;
+  display: grid; grid-template-columns: 1rem minmax(0, 1fr) auto; column-gap: var(--space-md); align-items: center;
+  padding: var(--space-sm) 0; border-bottom: var(--rule-night);
+}
+.pick__dot { width: .55rem; aspect-ratio: 1; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px oklch(100% 0 0 / .15); }
+.pick__main { display: grid; gap: .15em; }
+.pick__t { font-size: var(--text-lg); letter-spacing: .1em; transition: color var(--dur-short) var(--ease-out); }
+.pick__note { font-size: var(--text-sm); letter-spacing: .08em; color: var(--color-night-muted); }
+.pick__alb { font-size: var(--text-xs); letter-spacing: .12em; color: var(--color-night-muted); text-align: right; }
+@media (hover: hover) and (pointer: fine) { .pick:hover .pick__t { color: var(--color-night-accent); } }
+.pick.is-playing .pick__t { color: var(--color-night-accent); }
+.picks__foot { margin-top: var(--space-xl); font-size: var(--text-sm); letter-spacing: .12em; color: var(--color-night-muted); line-height: 1.9; }
+
+/* ---------- 打开的书 ---------- */
+.book { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; }
+.book[hidden] { display: none; }
+.book__scrim { position: absolute; inset: 0; background: oklch(12% 0.01 45 / .82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity var(--dur-long) var(--ease-out); }
+.book.is-shown .book__scrim { opacity: 1; }
+.book__stage { position: relative; perspective: 1800px; padding-bottom: var(--player-h); }
+.book__obj {
+  position: relative; width: var(--page-w); aspect-ratio: 1;
+  transform-style: preserve-3d;
+  transition: transform 900ms var(--ease-in-out);
+}
+.book__cover, .book__page, .book__face { position: absolute; inset: 0; border-radius: 3px; }
+.book__cover { transform-style: preserve-3d; transform-origin: 0 50%; transition: transform 1000ms var(--ease-in-out); z-index: 2; }
+.book__face { backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.book__face--back { transform: rotateY(180deg); }
+.book.is-open .book__cover { transform: rotateY(-180deg); }
+.book.is-open .book__obj { transform: translateX(50%); }
+
+/* 纸：内页是暖白的纸，和正站的 paper 同色 */
+.book__page, .book__face--back {
+  background: var(--grain-paper), linear-gradient(160deg, oklch(97% 0.012 78), var(--color-paper) 60%, var(--color-paper-2));
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px oklch(0% 0 0 / .06);
+}
+.book__page { overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+/* 书脊那一侧的阴影：两页中间的折痕 */
+.book__page::before, .book__face--back::after { content: ""; position: absolute; top: 0; bottom: 0; width: 2.2rem; pointer-events: none; z-index: 1; }
+.book__page::before { left: 0; background: linear-gradient(90deg, oklch(0% 0 0 / .14), transparent); }
+.book__face--back::after { right: 0; background: linear-gradient(270deg, oklch(0% 0 0 / .12), transparent); }
+
+/* 唱片：合着的时候藏在书后面，翻开以后往外滑出一半 */
+.book__disc {
+  position: absolute; top: 4%; left: 4%; width: 92%; aspect-ratio: 1; border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 31%, oklch(100% 0 0 / .08) 31% 31.6%, transparent 31.6%),
+    repeating-radial-gradient(circle, oklch(14% 0.005 45) 0 1px, oklch(19% 0.006 45) 1px 2.6px);
+  box-shadow: 0 10px 30px oklch(0% 0 0 / .5);
+  display: grid; place-items: center;
+  transform: translateZ(-2px);
+  transition: transform 900ms var(--ease-out) 350ms;
+}
+.book__disc span { width: 34%; aspect-ratio: 1; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px oklch(0% 0 0 / .15); position: relative; }
+.book__disc span::after { content: ""; position: absolute; inset: 44%; border-radius: 50%; background: oklch(12% 0.01 45); }
+.book.is-open .book__disc { transform: translateZ(-2px) translateX(46%); }
+.book.is-playing .book__disc { animation: disc-spin 4.8s linear infinite; animation-delay: 1.2s; }
+@keyframes disc-spin { from { rotate: 0deg; } to { rotate: 360deg; } }
+
+.book__close {
+  position: absolute; z-index: 3; top: calc(var(--space-md) + env(safe-area-inset-top)); right: var(--gutter);
+  font-size: var(--text-sm); letter-spacing: .3em; color: var(--color-night-muted);
+  padding: var(--space-xs) var(--space-sm); border: var(--rule-night); border-radius: 999px;
+  opacity: 0; transition: opacity var(--dur-long) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+.book.is-shown .book__close { opacity: 1; }
+.book__close:hover { color: var(--color-night-ink); }
+
+/* ---------- 封面（书的正面） ---------- */
+.sleeve {
+  position: absolute; inset: 0; padding: 7% 8%;
+  display: grid; grid-template-rows: auto 1fr auto;
+  background:
+    radial-gradient(120% 90% at 85% 10%, oklch(100% 0 0 / .14), transparent 55%),
+    radial-gradient(80% 70% at 10% 100%, oklch(0% 0 0 / .25), transparent 60%),
+    var(--grain), var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+}
+/* 一圈细线：唱片从封套里透出来的轮廓 */
+.sleeve::before {
+  content: ""; position: absolute; width: 88%; aspect-ratio: 1; right: -38%; top: 18%; border-radius: 50%;
+  border: 1px solid currentColor; opacity: .22;
+  box-shadow: 0 0 0 1.8rem transparent, inset 0 0 0 2.2rem color-mix(in srgb, currentColor 6%, transparent);
+}
+.sleeve::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px oklch(0% 0 0 / .18), inset 6px 0 10px -6px oklch(0% 0 0 / .35); pointer-events: none; }
+.sleeve__top { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(.8rem, 3.2vw, 1rem); letter-spacing: .1em; position: relative; }
+.sleeve__no { opacity: .75; }
+.sleeve__year { font-size: clamp(1.25rem, 6vw, 1.75rem); font-style: italic; }
+.sleeve__mid { align-self: center; display: grid; gap: .3em; position: relative; }
+.sleeve__title { font-size: clamp(2.2rem, 13vw, 3.6rem); font-weight: 600; line-height: 1.05; letter-spacing: .02em; overflow-wrap: anywhere; }
+.sleeve__title.is-cn { letter-spacing: .12em; }
+.sleeve__title.is-long { font-size: clamp(1.6rem, 9vw, 2.5rem); }
+.sleeve__sub { font-size: clamp(.85rem, 3.4vw, 1.05rem); letter-spacing: .25em; opacity: .8; }
+.sleeve__foot { display: flex; justify-content: space-between; align-items: end; font-size: clamp(.65rem, 2.6vw, .8rem); letter-spacing: .3em; position: relative; }
+.sleeve__foot b { font-weight: 600; letter-spacing: .4em; }
+
+/* ---------- 封面背面：左页，专辑的小档案 ---------- */
+.leaf { position: absolute; inset: 0; padding: 9% 9% 8%; display: grid; grid-template-rows: auto auto 1fr auto; gap: var(--space-md); }
+.leaf__kicker { font-size: var(--text-xs); letter-spacing: .4em; color: var(--color-muted); }
+.leaf__title { font-size: var(--text-2xl); font-weight: 600; letter-spacing: .08em; line-height: 1.2; }
+.leaf__facts { align-self: start; display: grid; grid-template-columns: auto 1fr; gap: .55em 1.2em; font-size: var(--text-sm); letter-spacing: .1em; color: var(--color-ink-2); }
+.leaf__facts dt { color: var(--color-muted); }
+.leaf__facts .num { font-size: var(--text-base); }
+.leaf__notes { font-size: var(--text-sm); line-height: 1.9; letter-spacing: .08em; color: var(--color-ink-2); border-top: 1px solid var(--color-rule); padding-top: var(--space-sm); }
+.leaf__notes b { font-weight: 600; color: var(--color-accent); }
+.leaf__swatch { width: 2.5rem; height: 4px; background: var(--bg); }
+
+/* ---------- 右页：曲目表 ---------- */
+.page__head { padding: 7% 8% var(--space-sm) 10%; display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); }
+.page__head h3 { font-size: var(--text-lg); font-weight: 600; letter-spacing: .15em; }
+.page__head p { font-size: var(--text-xs); letter-spacing: .2em; color: var(--color-muted); white-space: nowrap; }
+.page__list { overflow-y: auto; overscroll-behavior: contain; padding: 0 8% 7% 10%; scrollbar-width: thin; }
+.row {
+  width: 100%; text-align: left;
+  display: grid; grid-template-columns: 1.9rem minmax(0, 1fr) auto; column-gap: .6rem; align-items: baseline;
+  padding: .36rem 0; line-height: 1.3; border-bottom: 1px solid color-mix(in oklch, var(--color-rule) 70%, transparent);
+  color: var(--color-ink);
+}
+.row__no { font-size: var(--text-base); color: var(--color-muted); }
+.row__main { display: grid; gap: .1em; min-width: 0; }
+.row__t { font-size: var(--text-base); letter-spacing: .06em; line-height: 1.35; overflow-wrap: anywhere; transition: color var(--dur-short) var(--ease-out); }
+.row__sub { font-size: var(--text-xs); letter-spacing: .08em; color: var(--color-muted); }
+.row__sub b { font-weight: 400; color: var(--color-accent); }
+.row__d { font-size: var(--text-sm); color: var(--color-muted); }
+@media (hover: hover) and (pointer: fine) { .row:not(:disabled):hover .row__t { color: var(--color-accent); } }
+.row:disabled { cursor: default; }
+.row:disabled .row__t { color: var(--color-muted); opacity: .55; text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: color-mix(in oklch, var(--color-muted) 50%, transparent); }
+.row:disabled .row__d { font-family: var(--font-cn); font-size: var(--text-xs); letter-spacing: .1em; opacity: .7; }
+.row.is-playing .row__t, .row.is-playing .row__no { color: var(--color-accent); }
+.row.is-playing .row__no { visibility: hidden; position: relative; }
+.row.is-playing .row__no::after {
+  content: ""; visibility: visible; position: absolute; left: 0; bottom: .2em; width: 1rem; height: .8rem;
+  background: linear-gradient(var(--color-accent), var(--color-accent)) 0 100% / 3px 40% no-repeat,
+              linear-gradient(var(--color-accent), var(--color-accent)) 6px 100% / 3px 90% no-repeat,
+              linear-gradient(var(--color-accent), var(--color-accent)) 12px 100% / 3px 60% no-repeat;
+  animation: eq 900ms steps(3) infinite alternate;
+}
+.book:not(.is-playing) .row.is-playing .row__no::after, .player:not(.is-playing) ~ * .row.is-playing .row__no::after { animation-play-state: paused; }
+@keyframes eq {
+  0% { background-size: 3px 40%, 3px 90%, 3px 60%; }
+  50% { background-size: 3px 85%, 3px 45%, 3px 95%; }
+  100% { background-size: 3px 60%, 3px 75%, 3px 35%; }
+}
+
+/* ---------- 手机：竖屏放不下左右两页，封面改成往上翻（像唱片的折页往上打开） ---------- */
+@media (max-width: 55.99rem) {
+  .book__cover { transform-origin: 50% 0; }
+  .book__face--back { transform: rotateX(180deg); }
+  .book.is-open .book__cover { transform: rotateX(180deg); }
+  .book.is-open .book__obj { transform: translateY(42%); }
+  .book__page::before { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 1.6rem; background: linear-gradient(180deg, oklch(0% 0 0 / .14), transparent); }
+  .book__face--back::after { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 1.6rem; background: linear-gradient(0deg, oklch(0% 0 0 / .12), transparent); }
+  .book__disc { display: none; }
+  .leaf { padding: 7% 8% 6%; gap: var(--space-xs); grid-template-rows: auto auto auto 1fr; }
+  .leaf__title { font-size: var(--text-xl); }
+  .leaf__facts { gap: .3em 1em; }
+  .leaf__notes { overflow: hidden; line-height: 1.7; }
+  /* 竖着翻开以后上面没地方了：「合上」挪到书下面、播放条上面 */
+  .book__close { top: auto; right: auto; left: 50%; bottom: calc(var(--player-h) + env(safe-area-inset-bottom) + var(--space-xs)); transform: translateX(-50%); }
+  .book__stage { padding-bottom: calc(var(--player-h) + 2.5rem); }
+}
+@media (min-width: 56rem) {
+  .mp { --page-w: min(38vw, 72vh, 33rem); }
+  .mp-head { grid-template-columns: auto 1fr; align-items: end; column-gap: var(--space-3xl); }
+  .mp-kicker { grid-column: 1 / -1; }
+  .mp-name { grid-row: 2 / span 3; }
+  .mp-meta, .lucky { grid-column: 2; justify-self: start; }
+  .shelf__row { min-height: 19rem; }
+  .spine { --h: 17rem; }
+  .picks { display: grid; grid-template-columns: 16rem minmax(0, 1fr); column-gap: var(--space-3xl); max-width: 66rem; }
+  .picks__head { grid-row: 1 / span 2; font-size: var(--text-lg); letter-spacing: .25em; padding-top: var(--space-sm); }
+}
+
+/* ---------- 底下的播放条 ---------- */
+.player {
+  position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
+  background: color-mix(in oklch, var(--color-night-2) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-top: var(--rule-night);
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(0); transition: transform var(--dur-long) var(--ease-out);
+}
+.player[hidden] { display: block; transform: translateY(110%); visibility: hidden; }
+.player__seek {
+  -webkit-appearance: none; appearance: none; position: absolute; left: 0; right: 0; top: -7px; width: 100%; height: 14px; margin: 0;
+  background: transparent; cursor: pointer;
+  --p: 0%;
+}
+.player__seek::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, var(--color-night-accent) var(--p), var(--color-night-rule) var(--p)); }
+.player__seek::-moz-range-track { height: 2px; background: linear-gradient(90deg, var(--color-night-accent) var(--p), var(--color-night-rule) var(--p)); }
+.player__seek::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -5px; border-radius: 50%; background: var(--color-night-accent); opacity: 0; transition: opacity var(--dur-short); }
+.player__seek::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--color-night-accent); opacity: 0; }
+.player:hover .player__seek::-webkit-slider-thumb, .player__seek:focus-visible::-webkit-slider-thumb { opacity: 1; }
+.player:hover .player__seek::-moz-range-thumb { opacity: 1; }
+.player__inner {
+  height: var(--player-h); padding: 0 var(--gutter);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; column-gap: var(--space-md);
+}
+.player__disc {
+  width: 2.9rem; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: repeating-radial-gradient(circle, var(--color-night) 0 1px, oklch(23% 0.01 45) 1px 2.3px);
+  box-shadow: 0 0 0 1px var(--color-night-rule);
+  animation: disc-spin 4.8s linear infinite; animation-play-state: paused;
+}
+.player.is-playing .player__disc { animation-play-state: running; }
+.player__disc span { width: 40%; aspect-ratio: 1; border-radius: 50%; background: var(--bg, var(--color-night-accent)); }
+.player__info { display: grid; text-align: left; min-width: 0; gap: .15em; }
+.player__title { font-size: var(--text-base); letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player__sub { font-size: var(--text-xs); letter-spacing: .12em; color: var(--color-night-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player__time { font-size: var(--text-sm); color: var(--color-night-muted); }
+.player__ctrl { display: flex; align-items: center; gap: var(--space-2xs); }
+.player__ctrl button { width: 2.6rem; height: 2.6rem; display: grid; place-items: center; border-radius: 50%; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short); }
+.player__ctrl button:hover { background: color-mix(in oklch, var(--color-night-ink) 8%, transparent); }
+.player__ctrl svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.player__ctrl [data-prev] svg path:last-child, .player__ctrl [data-next] svg path:last-child { fill: currentColor; }
+.player__play { border: 1px solid var(--color-night-rule) !important; }
+.player__play .i-play { fill: currentColor; stroke: none; }
+.player__play .i-pause { display: none; }
+.player.is-playing .player__play .i-play { display: none; }
+.player.is-playing .player__play .i-pause { display: inline; }
+.player__mode { font-size: var(--text-sm); color: var(--color-night-muted); }
+.player__mode[aria-pressed="true"] { color: var(--color-night-accent); }
+@media (max-width: 30rem) {
+  .player__time { display: none; }
+  .player__inner { column-gap: var(--space-sm); }
+  .player__ctrl button { width: 2.4rem; height: 2.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book__obj, .book__cover, .book__disc, .spine { transition-duration: 1ms !important; }
+  .player__disc, .book__disc, .lucky__disc { animation: none !important; }
+}

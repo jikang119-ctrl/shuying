@@ -75,7 +75,9 @@
       if (r.status === 503 || r.status === 429) hint.textContent = '试太多次了　过一分钟再来';
     } catch { hint.textContent = '网不太好　再试一次'; }
     btn.removeAttribute('aria-busy');
-    if (ok) { location.replace('./'); return; }
+    // 从唱片柜被带过来的，进门后回唱片柜（只认站内的这几个页面）
+    const next = new URLSearchParams(location.search).get('next');
+    if (ok) { location.replace(next === 'music.html' ? './music.html' : './'); return; }
     document.cookie = 'shuying=; path=/; max-age=0';
     if (hint.textContent === HINT) hint.textContent = '不对哦　再想想';
     hint.classList.add('is-wrong');

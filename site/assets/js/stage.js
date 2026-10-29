@@ -58,9 +58,22 @@ function initTracks(el) {
   const n = btns.length;
   // 唱臂角度：最外一圈 17°，最里一圈 31°；没选歌时停在唱片外面
   const angle = (i) => 17 + (14 * i) / Math.max(1, n - 1);
+  // 唱片柜的曲库：章节一进视口就先取好，点歌时同步拿到文件名（iOS 要求 play() 在点击里直接调）
+  let lib = new Map();
+  fetch('assets/data/music.json').then((r) => r.json()).then((d) => {
+    for (const a of d.albums) for (const t of a.tracks) if (t.f && !lib.has(t.t)) lib.set(t.t, t.f);
+  }).catch(() => {});
+  let audio = null;
   btns.forEach((b, i) => b.addEventListener('click', () => {
     const on = b.getAttribute('aria-pressed') !== 'true';
-    btns.forEach((o) => o.setAttribute('aria-pressed', o === b && on ? 'true' : 'false'));
+    btns.forEach((o) => { o.setAttribute('aria-pressed', o === b && on ? 'true' : 'false'); o.classList.remove('is-loud'); });
     arm.style.setProperty('--arm', on ? `${angle(i).toFixed(1)}deg` : '2deg');
+    const f = lib.get(b.dataset.title);
+    if (!on) { audio?.pause(); return; }
+    if (!f) { audio?.pause(); return; }               // 这首还没收到：只放下唱臂
+    audio ||= new Audio();
+    audio.src = `music/${f}`;
+    audio.play().then(() => b.classList.add('is-loud')).catch(() => {});
+    audio.onended = () => { b.classList.remove('is-loud'); b.setAttribute('aria-pressed', 'false'); arm.style.setProperty('--arm', '2deg'); };
   }));
 }

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1c1814">
+<meta name="format-detection" content="telephone=no">
+<title>骑士的唱片柜 · 疏影</title>
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/serif-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/serif-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/data/music.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="assets/css/base.css?v=mvtpuqop">
+<link rel="stylesheet" href="assets/css/music.css?v=mvtpuqop">
+<script type="module" src="assets/js/music.js?v=mvtpuqop"></script>
+</head>
+<body class="mp">
+
+<a class="mp-back" href="./#jolin"><span aria-hidden="true">←</span>　回到疏影</a>
+
+<header class="mp-head">
+  <p class="mp-kicker">骑士的唱片柜</p>
+  <h1 class="mp-name" aria-label="蔡依林"><span>蔡</span><span>依</span><span>林</span></h1>
+  <p class="mp-meta"><span class="num">1999 — 2025</span><span class="mp-sep" aria-hidden="true"></span><span data-stat>十六张专辑</span></p>
+  <button class="lucky" type="button" data-lucky>
+    <span class="lucky__disc" aria-hidden="true"><span></span></span>
+    <span class="lucky__text"><span class="lucky__label">随便放一首</span><span class="lucky__hint">从你最常听的那些里挑</span></span>
+  </button>
+</header>
+
+<section class="shelf" aria-labelledby="shelf-h">
+  <div class="shelf__head">
+    <h2 id="shelf-h">书架</h2>
+    <p>点一本　打开它</p>
+  </div>
+  <div class="shelf__scroll">
+    <div class="shelf__row" data-shelf></div>
+  </div>
+</section>
+
+<section class="picks" aria-labelledby="picks-h">
+  <h2 id="picks-h" class="picks__head">你说过的那几首</h2>
+  <ol class="picks__list" data-picks></ol>
+  <p class="picks__foot" data-missing-line></p>
+</section>
+
+<div class="book" data-book hidden>
+  <div class="book__scrim" data-close></div>
+  <div class="book__stage">
+    <div class="book__obj" data-obj>
+      <div class="book__disc" aria-hidden="true"><span></span></div>
+      <section class="book__page" data-page aria-live="polite"></section>
+      <div class="book__cover" data-cover>
+        <div class="book__face book__face--front" data-front></div>
+        <div class="book__face book__face--back" data-back></div>
+      </div>
+    </div>
+  </div>
+  <button class="book__close" type="button" data-close>合上</button>
+</div>
+
+<footer class="player" data-player hidden>
+  <input class="player__seek" type="range" min="0" max="1000" step="1" value="0" aria-label="进度" data-seek>
+  <div class="player__inner">
+    <button class="player__disc" type="button" data-open-current aria-label="打开正在放的这张"><span></span></button>
+    <button class="player__info" type="button" data-open-current>
+      <span class="player__title" data-title></span>
+      <span class="player__sub" data-sub></span>
+    </button>
+    <span class="player__time num" data-time>0:00</span>
+    <div class="player__ctrl">
+      <button type="button" data-prev aria-label="上一首"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6v12M18 6l-8 6 8 6z"/></svg></button>
+      <button type="button" class="player__play" data-toggle aria-label="播放"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5.5v13l11-6.5z"/><path class="i-pause" d="M8 5v14M16 5v14"/></svg></button>
+      <button type="button" data-next aria-label="下一首"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6v12M6 6l8 6-8 6z"/></svg></button>
+      <button type="button" class="player__mode" data-mode aria-pressed="false" aria-label="随机播放">随</button>
+    </div>
+  </div>
+</footer>
+
+<audio data-audio preload="none"></audio>
+</body>
+</html>

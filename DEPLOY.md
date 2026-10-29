@@ -100,6 +100,38 @@ PASSCODE=0828 bash deploy/install.sh
 - 备份：`cp /var/lib/shuying/letters.jsonl ~/letters-$(date +%F).jsonl`（更新站点不会动这个文件）
 - 后端日志：`journalctl -u shuying-letters -n 50 --no-pager`（只记请求和状态码，不记信的内容）
 
+## 唱片柜（蔡依林的歌）
+
+`/music.html` 是唱片柜：书架上 18 本书（16 张录音室专辑 + 精选里的新歌 + 单曲合作原声），点开放歌。页面和歌都要先输进门数字。
+
+**歌不在仓库里**（约 1.8 GB，也有版权），要单独传到服务器的 `/var/www/shuying/music/`。`install.sh` 更新站点时不会删这个目录。
+
+在本机（Windows，**家里网络或手机热点**，公司网拦 SSH）：
+
+```powershell
+# 歌在 D:\projects\shuying-music（tools/music.py 生成，198 个文件，文件名是哈希）
+scp D:\projects\shuying-music\* root@8.163.12.169:/var/www/shuying/music/
+```
+
+然后在服务器上：
+
+```bash
+chown -R www-data:www-data /var/www/shuying/music && find /var/www/shuying/music -type f -exec chmod 644 {} +
+ls /var/www/shuying/music | wc -l      # 应该是 198
+```
+
+- 传进服务器的流量阿里云不收费；她听歌是出网流量，一首 8–12 MB，每月 20 GB 大约够听 2000 首
+- 拖进度条靠 nginx 自带的 Range，不用配
+- 以后补了新歌：把音频放进 `D:\projects\jolin\raw`（随便哪层子目录），然后
+  ```powershell
+  python -X utf8 tools/music.py --src D:/projects/jolin/raw --out D:/projects/shuying-music --prune
+  python -X utf8 tools/music_build.py   # 重写 site/assets/data/music.json
+  python -X utf8 tools/fonts.py         # 新歌名里的字
+  node tools/build.mjs
+  ```
+  再 push、服务器 `git pull && install.sh`，并把新增的音频 `scp` 上去（已有的不用重传）
+- 还没收到的 28 首在书里是灰的，划掉的样子；补齐以后自动变黑
+
 ## 以后更新内容
 
 本机改完、push 之后，在服务器上：

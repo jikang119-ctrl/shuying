@@ -68,6 +68,26 @@ server {
         add_header Cache-Control "private, max-age=2592000";
         try_files $uri =404;
     }
+    # 唱片柜：页面和歌都要进门。歌在 __ROOT__/music/（不在仓库里，用 deploy/upload-music 单独传）
+    location = /music.html {
+        limit_req zone=shuying_gate burst=30 nodelay;
+        try_files /.shuying-no-such-file @musicpage;
+    }
+    location @musicpage {
+        if ($shuying_ok = 0) { return 302 /lock.html?next=music.html; }
+        add_header Cache-Control "no-cache";
+        try_files /music.html =404;
+    }
+    location /music/ {
+        limit_req zone=shuying_gate burst=60 nodelay;
+        try_files /.shuying-no-such-file @music;
+    }
+    location @music {
+        if ($shuying_ok = 0) { return 403; }
+        # 文件名是内容哈希，不会变，可以一直缓存；拖进度条靠 nginx 自带的 Range
+        add_header Cache-Control "private, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
     location = / {
         limit_req zone=shuying_gate burst=30 nodelay;
         try_files /.shuying-no-such-file @home;

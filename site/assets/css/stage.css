@@ -114,6 +114,19 @@
 }
 .track:active .track__title { transform: translateY(1px); }
 
+/* 去唱片柜的入口：一行字 + 箭头，和歌单同一种线 */
+.stage__more {
+  margin-top: var(--space-xl);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-md);
+  padding: var(--space-md) 0; border-top: var(--rule-night); border-bottom: var(--rule-night);
+  color: var(--color-night-ink); text-decoration: none;
+}
+.stage__more-t { font-size: var(--text-lg); letter-spacing: .2em; color: var(--color-night-accent); }
+.stage__more-s { grid-row: 2; font-size: var(--text-sm); letter-spacing: .15em; color: var(--color-night-muted); }
+.stage__more-a { grid-row: 1 / span 2; grid-column: 2; font-size: var(--text-xl); transition: transform var(--dur-short) var(--ease-out); }
+.stage__more:hover .stage__more-a { transform: translateX(.3rem); }
+.track.is-loud .track__no::after { content: "　♪"; color: var(--color-night-accent); }
+
 /* ---------- 照片 + 最后一句 ---------- */
 .stage__photos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
 .stage__photo img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-sm); }

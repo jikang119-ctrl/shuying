@@ -11,7 +11,7 @@ export default function stage(ch, { esc, img, section }) {
     return `<p class="say${l.who ? '' : ' say--aside'}${l.who === '我' ? ' say--me' : ''}" style="--i:${i}"><span class="say__text">${segs(l.text, esc)}</span>${who}</p>`;
   }).join('');
 
-  const tracks = ch.tracks.map((t, i) => `<li><button class="track" type="button" aria-pressed="false" data-i="${i}">
+  const tracks = ch.tracks.map((t, i) => `<li><button class="track" type="button" aria-pressed="false" data-i="${i}" data-title="${esc(t.title)}">
       <span class="track__no num">${String(i + 1).padStart(2, '0')}</span>
       <span class="track__title">${esc(t.title)}</span>
       <span class="track__note">${esc(t.note)}</span>
@@ -37,6 +37,7 @@ export default function stage(ch, { esc, img, section }) {
     <div class="stage__tracks">
       <p class="stage__tracks-head">她的歌单　点一首</p>
       <ol class="tracks">${tracks}</ol>
+      <a class="stage__more" href="music.html"><span class="stage__more-t">打开她的唱片柜</span><span class="stage__more-s">十六张专辑　一本一本翻</span><span class="stage__more-a" aria-hidden="true">→</span></a>
     </div>
   </div>
   <div class="stage__photos">${photos}</div>

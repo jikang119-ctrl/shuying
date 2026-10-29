@@ -99,4 +99,11 @@ ${core.finale(story, ctx)}
 `;
 
 fs.writeFileSync(path.join(ROOT, 'site', 'index.html'), html);
+
+// 唱片柜是手写的页面，只给它引用的 css/js 盖上同一个版本号（/assets/ 缓存 30 天，不换号手机上会一直用旧的）
+const musicPage = path.join(ROOT, 'site', 'music.html');
+if (fs.existsSync(musicPage)) {
+  const m = fs.readFileSync(musicPage, 'utf8').replace(/(assets\/(?:css|js)\/[\w-]+\.(?:css|js))(\?v=\w+)?/g, `$1?v=${ver}`);
+  fs.writeFileSync(musicPage, m);
+}
 console.log(`site/index.html ${(html.length / 1024).toFixed(1)} KB · ${story.chapters.length} 章 · css: ${cssFiles.join(', ')}`);

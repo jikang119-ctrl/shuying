@@ -30,8 +30,9 @@ def ensure():
 
 def chars():
     text = ''
-    files = [os.path.join(ROOT, 'site', n) for n in ('index.html', 'lock.html', 'inbox.html')]
+    files = [os.path.join(ROOT, 'site', n) for n in ('index.html', 'lock.html', 'inbox.html', 'music.html')]
     files += glob.glob(os.path.join(ROOT, 'site', 'assets', 'js', '*.js'))
+    files += glob.glob(os.path.join(ROOT, 'site', 'assets', 'data', '*.json'))   # 唱片柜的歌名
     for f in files:
         if os.path.exists(f):
             text += open(f, encoding='utf-8').read()
