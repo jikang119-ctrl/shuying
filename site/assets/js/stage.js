@@ -64,6 +64,13 @@ function initTracks(el) {
     for (const a of d.albums) for (const t of a.tracks) if (t.f && !lib.has(t.t)) lib.set(t.t, t.f);
   }).catch(() => {});
   let audio = null;
+  // 和右下角的小唱片互斥（bgm.js）：那边开始放，这边就停、唱臂抬起
+  addEventListener('shuying:play', (e) => {
+    if (!audio || e.detail === audio || audio.paused) return;
+    audio.pause();
+    btns.forEach((o) => { o.setAttribute('aria-pressed', 'false'); o.classList.remove('is-loud'); });
+    arm.style.setProperty('--arm', '2deg');
+  });
   btns.forEach((b, i) => b.addEventListener('click', () => {
     const on = b.getAttribute('aria-pressed') !== 'true';
     btns.forEach((o) => { o.setAttribute('aria-pressed', o === b && on ? 'true' : 'false'); o.classList.remove('is-loud'); });
@@ -73,6 +80,7 @@ function initTracks(el) {
     if (!f) { audio?.pause(); return; }               // 这首还没收到：只放下唱臂
     audio ||= new Audio();
     audio.src = `music/${f}`;
+    dispatchEvent(new CustomEvent('shuying:play', { detail: audio }));
     audio.play().then(() => b.classList.add('is-loud')).catch(() => {});
     audio.onended = () => { b.classList.remove('is-loud'); b.setAttribute('aria-pressed', 'false'); arm.style.setProperty('--arm', '2deg'); };
   }));

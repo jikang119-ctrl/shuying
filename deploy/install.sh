@@ -50,7 +50,7 @@ rsync -a --delete --exclude '/music/' "$HERE/site/" "$ROOT/" 2>/dev/null || {
   find "${ROOT:?}" -mindepth 1 -maxdepth 1 ! -name music -exec rm -rf {} +
   cp -a "$HERE/site/." "$ROOT/"
 }
-echo "唱片柜里的歌：$(find "$ROOT/music" -name '*.m4a' | wc -l) 首（没有的话按 DEPLOY.md「唱片柜」一节传上来）"
+echo "唱片柜里的歌：$(find "$ROOT/music" -type f \( -name '*.mp3' -o -name '*.m4a' \) | wc -l) 个文件（应该是 198；没有的话按 DEPLOY.md「唱片柜」一节传上来）"
 chown -R www-data:www-data "$ROOT"
 find "$ROOT" -type d -exec chmod 755 {} +
 find "$ROOT" -type f -exec chmod 644 {} +

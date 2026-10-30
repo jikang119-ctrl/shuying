@@ -18,6 +18,7 @@ export function cover(story, { esc, img }) {
   <canvas class="cover__canvas" aria-hidden="true"></canvas>
   <div class="cover__veil"></div>
   <p class="cover__hint"><span class="hint-fine">${esc(c.hintFine)}</span><span class="hint-coarse">${esc(c.hintCoarse)}</span></p>
+  ${c.music ? `<a class="cover__music" href="music.html"><span>${esc(c.music)}</span><span class="cover__music-a" aria-hidden="true">→</span></a>` : ''}
   <div class="cover__text">
     <h1 class="cover__title">${esc(c.title)}</h1>
     <p class="cover__sub">${esc(c.sub)}</p>

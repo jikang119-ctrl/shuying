@@ -10,7 +10,7 @@
   文件名是歌名的哈希加原扩展名，和曲序无关；已经有的跳过；--prune 删掉 --out 里不在曲库的旧文件
 - 写 content/music-catalog.json：每首歌对应哪个文件、多长、属于哪张专辑（不含音频，进仓库）
 
-音频本身不进仓库：太大（约 1 GB），也有版权。部署时用 deploy/upload-music 直接传到服务器。
+音频本身不进仓库：太大（约 1.8 GB），也有版权。部署时照 DEPLOY.md「唱片柜」一节用 scp 传到服务器，传之前用 tools/check_music.py 核对。
 """
 import argparse, concurrent.futures as cf, hashlib, json, os, re, shutil, subprocess, sys
 

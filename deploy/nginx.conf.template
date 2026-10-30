@@ -68,7 +68,7 @@ server {
         add_header Cache-Control "private, max-age=2592000";
         try_files $uri =404;
     }
-    # 唱片柜：页面和歌都要进门。歌在 __ROOT__/music/（不在仓库里，用 deploy/upload-music 单独传）
+    # 唱片柜：页面和歌都要进门。歌在 __ROOT__/music/（不在仓库里，照 DEPLOY.md「唱片柜」一节用 scp 单独传）
     location = /music.html {
         limit_req zone=shuying_gate burst=30 nodelay;
         try_files /.shuying-no-such-file @musicpage;

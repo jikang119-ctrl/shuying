@@ -2,6 +2,11 @@ import { onScreen } from './util.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+// 按需加载的模块也带上 main.js 的版本号（/assets/ 缓存 30 天，不带号手机上会一直用旧的）
+const ver = new URL(import.meta.url).search;
+
+// ---- 进门放一首她的歌：右下角小唱片 ----
+import(`./bgm.js${ver}`).then((m) => m.init()).catch((err) => console.warn('[shuying] 背景音乐加载失败', err));
 
 // ---- 各章模块：快进入视口时才加载 ----
 const loaded = new WeakSet();
@@ -11,7 +16,7 @@ const io = new IntersectionObserver((entries) => {
     loaded.add(e.target);
     io.unobserve(e.target);
     const name = e.target.dataset.module;
-    import(`./${name}.js`)
+    import(`./${name}.js${ver}`)
       .then((m) => m.init(e.target))
       .catch((err) => console.warn(`[shuying] 模块 ${name} 加载失败`, err));
   }

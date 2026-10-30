@@ -197,7 +197,7 @@ a { color: inherit; }
 .cover__veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to top, var(--color-scrim), transparent 55%); opacity: 0; transition: opacity 1.6s var(--ease-out); }
 .cover.is-half .cover__veil, .cover.is-developed .cover__veil { opacity: 1; }
 .cover__text {
-  position: absolute; left: var(--gutter); right: var(--gutter); bottom: max(var(--space-2xl), env(safe-area-inset-bottom));
+  position: absolute; left: var(--gutter); right: var(--gutter); bottom: max(calc(var(--space-2xl) + var(--space-lg)), calc(env(safe-area-inset-bottom) + var(--space-2xl)));   /* 底下留出右下角小唱片的高度 */
   display: grid; gap: var(--space-sm); pointer-events: none;
   color: var(--color-ink);
   transition: color 1.6s var(--ease-out);
@@ -213,11 +213,79 @@ a { color: inherit; }
 }
 .cover.is-half .cover__hint, .cover.is-developed .cover__hint { opacity: 0; }
 .cover__scroll {
-  position: absolute; right: var(--gutter); bottom: max(var(--space-2xl), env(safe-area-inset-bottom));
+  position: absolute; right: var(--gutter); bottom: max(calc(var(--space-2xl) + var(--space-lg)), calc(env(safe-area-inset-bottom) + var(--space-2xl)));
   writing-mode: vertical-rl; font-size: var(--text-xs); letter-spacing: .5em;
   color: var(--color-night-ink); opacity: 0; transition: opacity 1.6s var(--ease-out);
 }
 .cover.is-developed .cover__scroll { opacity: .8; }
+.cover__music {
+  position: absolute; top: max(var(--space-lg), env(safe-area-inset-top)); right: var(--gutter);
+  display: flex; align-items: center; gap: var(--space-xs);
+  margin: calc(-1 * var(--space-sm)); padding: var(--space-sm);
+  font-size: var(--text-sm); letter-spacing: .2em; color: var(--color-ink); text-decoration: none;
+  transition: color 1.6s var(--ease-out);
+}
+.cover.is-half .cover__music, .cover.is-developed .cover__music { color: var(--color-night-ink); }
+.cover__music-a { transition: transform var(--dur-short) var(--ease-out); }
+.cover__music:hover .cover__music-a { transform: translateX(.3rem); }
+
+/* ---------- 右下角的小唱片：进门放一首她的歌（bgm.js） ---------- */
+.bgm {
+  position: fixed; z-index: 45; right: var(--gutter); bottom: max(var(--space-md), calc(env(safe-area-inset-bottom) + var(--space-sm)));
+  display: flex; align-items: center; gap: var(--space-sm);
+  color: var(--color-night-ink); pointer-events: none;
+  transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out);
+}
+.bgm.is-hidden { opacity: 0; transform: translateY(8px); }
+.bgm__disc {
+  pointer-events: auto; flex: none; width: 2.9rem; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: repeating-radial-gradient(circle, var(--color-night) 0 1px, var(--color-night-2) 1px 2.3px);
+  box-shadow: 0 0 0 1px var(--color-night-rule), 0 6px 18px var(--color-scrim);
+  animation: bgm-spin 4.8s linear infinite; animation-play-state: paused;
+}
+.bgm.is-playing .bgm__disc { animation-play-state: running; }
+.bgm__disc span { width: 40%; aspect-ratio: 1; border-radius: 50%; background: var(--bg, var(--color-night-accent)); }
+.bgm.is-waiting .bgm__disc span { animation: bgm-breathe 2.4s var(--ease-in-out) infinite; }
+.bgm.is-hidden .bgm__disc, .bgm.is-hidden .bgm__card { pointer-events: none; }
+@keyframes bgm-spin { from { rotate: 0deg; } to { rotate: 360deg; } }
+@keyframes bgm-breathe { 50% { opacity: .45; } }
+
+/* 换歌时冒出来几秒的歌名；等她点按时一直在 */
+.bgm__now {
+  max-width: min(15rem, calc(100vw - 2 * var(--gutter) - 3.7rem));
+  padding: .45rem .9rem; border-radius: 999px;
+  background: color-mix(in oklch, var(--color-night-2) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px var(--color-night-rule);
+  font-size: var(--text-sm); letter-spacing: .15em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; transform: translateX(6px);
+  transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out);
+}
+.bgm.is-telling .bgm__now { opacity: 1; transform: none; }
+
+/* 点开小唱片：歌名 + 暂停 / 换一首 / 唱片柜 */
+.bgm__card {
+  position: absolute; right: 0; bottom: calc(100% + var(--space-sm));
+  width: min(17rem, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-md) var(--space-lg) var(--space-xs); line-height: 1.5;
+  background: color-mix(in oklch, var(--color-night-2) 94%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: var(--rule-night); border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px var(--color-scrim);
+  opacity: 0; visibility: hidden; transform: translateY(6px);
+  transition: opacity var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out), visibility 0s linear var(--dur-short);
+}
+.bgm.is-open .bgm__card { pointer-events: auto; opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.bgm__kicker { font-size: var(--text-xs); letter-spacing: .3em; color: var(--color-night-accent); }
+.bgm__title { margin-top: var(--space-xs); font-size: var(--text-lg); letter-spacing: .08em; overflow-wrap: anywhere; }
+.bgm__sub { margin-top: .2em; font-size: var(--text-xs); letter-spacing: .12em; color: var(--color-night-muted); }
+.bgm__row { display: flex; margin: var(--space-sm) calc(-1 * var(--space-sm)) 0; border-top: var(--rule-night); }
+.bgm__row > * {
+  flex: 1; min-height: 2.75rem; display: flex; align-items: center; justify-content: center; gap: .2em;
+  font-size: var(--text-sm); letter-spacing: .15em; color: var(--color-night-ink); text-decoration: none;
+}
+.bgm__row a { color: var(--color-night-accent); }
+@media (hover: hover) { .bgm__row > *:hover { color: var(--color-night-accent); } }
 .hint-fine { display: none; }
 @media (hover: hover) and (pointer: fine) { .hint-fine { display: inline; } .hint-coarse { display: none; } }
 
