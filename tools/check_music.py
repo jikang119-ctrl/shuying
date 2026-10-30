@@ -18,7 +18,7 @@ data = json.load(open(os.path.join(ROOT, 'site', 'assets', 'data', 'music.json')
 want = {t['f']: t['t'] for a in data['albums'] for t in a['tracks'] if t.get('f')}
 have = set(os.listdir(args.dir)) if os.path.isdir(args.dir) else set()
 missing = sorted(set(want) - have)
-extra = sorted(have - set(want))
+extra = sorted(f for f in have - set(want) if f.lower().endswith(('.mp3', '.m4a', '.flac')))   # README、.git 不算
 size = sum(os.path.getsize(os.path.join(args.dir, f)) for f in want if f in have) / 1e9
 
 print(f'music.json 要 {len(want)} 个文件，{args.dir} 里有 {len(want) - len(missing)} 个（{size:.2f} GB）')

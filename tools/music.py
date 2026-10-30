@@ -10,7 +10,7 @@
   文件名是歌名的哈希加原扩展名，和曲序无关；已经有的跳过；--prune 删掉 --out 里不在曲库的旧文件
 - 写 content/music-catalog.json：每首歌对应哪个文件、多长、属于哪张专辑（不含音频，进仓库）
 
-音频本身不进仓库：太大（约 1.8 GB），也有版权。部署时照 DEPLOY.md「唱片柜」一节用 scp 传到服务器，传之前用 tools/check_music.py 核对。
+音频不进这个仓库，在私有仓库 jikang119-ctrl/shuying-music（--out 指的那个目录就是它的工作区）。部署照 DEPLOY.md「唱片柜」一节，传之前用 tools/check_music.py 核对。
 """
 import argparse, concurrent.futures as cf, hashlib, json, os, re, shutil, subprocess, sys
 
@@ -124,7 +124,7 @@ def main():
 
     if args.prune:
         keep = {c['file'] for c in catalog}
-        gone = [n for n in os.listdir(args.out) if n not in keep]
+        gone = [n for n in os.listdir(args.out) if n not in keep and n.lower().endswith(('.mp3', '.m4a', '.flac'))]   # README、.git 留着
         for n in gone:
             os.remove(os.path.join(args.out, n))
         print(f'清掉不在曲库里的旧文件 {len(gone)} 个')

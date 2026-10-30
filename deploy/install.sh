@@ -2,9 +2,9 @@
 # 《疏影》一键部署：装 nginx → 拷站点 → 装回信小后端 → 写配置 → 检查 → 重载。可以重复跑（更新时也用它）。
 #
 # 用法（在服务器上、仓库根目录下，root 身份）：
-#   PASSCODE=0828 bash deploy/install.sh
+#   PASSCODE=0828 bash deploy/install.sh      # 第一次装；以后更新直接 bash deploy/install.sh
 # 可选环境变量：
-#   PASSCODE        进门的四位数，默认 0828
+#   PASSCODE        进门的四位数；不给就沿用服务器上现在的，第一次装默认 0828
 #   ADMIN_CODE      收信页的读信码；不给就沿用上次的，第一次装会随机生成 6 位并打印出来
 #   FEISHU_WEBHOOK  飞书群机器人 webhook，来信时推一条；不给就沿用上次的（可以不配）
 #   PORT            网站端口，默认 80
@@ -12,7 +12,6 @@
 #   ROOT            站点目录，默认 /var/www/shuying
 set -euo pipefail
 
-PASSCODE="${PASSCODE:-0828}"
 PORT="${PORT:-80}"
 API_PORT="${API_PORT:-8830}"
 ROOT="${ROOT:-/var/www/shuying}"
@@ -20,6 +19,13 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"
 CONF=/etc/nginx/conf.d/shuying.conf
 ENVF=/etc/shuying/letters.env
 UNIT=/etc/systemd/system/shuying-letters.service
+
+# 进门数字、读信码、webhook：命令行没给就沿用上次的
+old() { [[ -f "$ENVF" ]] && grep -E "^$1=" "$ENVF" | head -1 | cut -d= -f2- || true; }
+# 进门数字先看 letters.env，再看 nginx 配置（更早的版本只写在那里），都没有才用 0828；不然重跑会把她存的数字冲掉
+PASSCODE="${PASSCODE:-$(old PASSCODE)}"
+PASSCODE="${PASSCODE:-$( [[ -f "$CONF" ]] && grep -oE '^\s*"[0-9]{4}" 1;' "$CONF" | grep -oE '[0-9]{4}' | head -1 || true)}"
+PASSCODE="${PASSCODE:-0828}"
 
 [[ "$PASSCODE" =~ ^[0-9]{4}$ ]] || { echo "PASSCODE 必须是 4 位数字"; exit 1; }
 [[ $EUID -eq 0 ]] || { echo "请用 root 运行（sudo -i 之后再跑）"; exit 1; }
@@ -45,7 +51,7 @@ fi
 
 echo "== 3/6 拷贝站点到 $ROOT"
 mkdir -p "$ROOT" "$ROOT/music"
-# music/ 是单独传上来的歌（不在仓库里），更新站点时不能删
+# music/ 是单独传上来的歌（在 shuying-music 仓库，不在这里），更新站点时不能删
 rsync -a --delete --exclude '/music/' "$HERE/site/" "$ROOT/" 2>/dev/null || {
   find "${ROOT:?}" -mindepth 1 -maxdepth 1 ! -name music -exec rm -rf {} +
   cp -a "$HERE/site/." "$ROOT/"
@@ -60,8 +66,6 @@ mkdir -p /opt/shuying /var/lib/shuying /etc/shuying
 install -m 644 "$HERE/server/letters.py" /opt/shuying/letters.py
 chown www-data:www-data /var/lib/shuying
 chmod 750 /var/lib/shuying
-# 读信码和 webhook：命令行没给就沿用上次的
-old() { [[ -f "$ENVF" ]] && grep -E "^$1=" "$ENVF" | head -1 | cut -d= -f2- || true; }
 ADMIN_CODE="${ADMIN_CODE:-$(old ADMIN_CODE)}"
 FEISHU_WEBHOOK="${FEISHU_WEBHOOK:-$(old FEISHU_WEBHOOK)}"
 NEW_ADMIN=""

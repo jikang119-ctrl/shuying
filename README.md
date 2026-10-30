@@ -8,6 +8,26 @@
 
 部署见 [DEPLOY.md](DEPLOY.md)。
 
+## 让另一个 AI 部署
+
+要两个私有仓库：代码是这个，歌在 [jikang119-ctrl/shuying-music](https://github.com/jikang119-ctrl/shuying-music)（198 个文件 1.81 GB）。不用再从飞书下压缩包。
+
+先准备三样，口头告诉那台电脑上的 AI，别让它写进文件：
+
+- 服务器 root 密码（`root@8.163.12.169`）
+- 一个 GitHub token：https://github.com/settings/tokens → Fine-grained → 只选 shuying 和 shuying-music → Contents: Read-only（服务器拉代码、拉歌用）
+- 那台电脑上 git 能登 GitHub 账号 jikang119-ctrl
+
+然后把这段发给它：
+
+> 帮我把《疏影》网站部署到阿里云服务器 root@8.163.12.169，要做到手机上验收全过。
+>
+> 1. `git clone https://github.com/jikang119-ctrl/shuying.git D:\projects\shuying`，通读 DEPLOY.md，照「从另一台电脑做完整套」1–5 步做，每步对上「要看到」再往下走。
+> 2. 歌在私有仓库 jikang119-ctrl/shuying-music。第 4 步先试服务器直接从 GitHub 拉（A），慢就在本机 clone 再 scp（B）。
+> 3. 必须在家里网络下操作，公司网拦 SSH。root 密码和 GitHub token 不要写进任何文件。
+> 4. 服务器上已经装过旧版，进门数字不是 0828。跑 install.sh 不要写 PASSCODE，脚本会沿用现在的；跑之前先照第 3 步查出现在的数字。
+> 5. 做完把第 5 步 curl 的结果贴给我（应该是 200 200 200 206 302），再告诉我网址、进门数字和读信码，我用手机按清单验收。
+
 ## 九个部分
 
 | 章 | 内容 | 手机 | 电脑 |
@@ -43,7 +63,7 @@ deploy/                   nginx 配置模板 + 一键安装脚本
 site/music.html           唱片柜（手写页面；build.mjs 只给它的 css/js 盖版本号）
 content/jolin-songs.tsv   中文维基「蔡依林歌曲列表」222 首：歌名|专辑|年份
 content/jolin-tracklists.json  各专辑官方曲序（维基各专辑页）
-tools/music.py            下载的音频 → 曲库（去水印标签、按歌名哈希命名）+ content/music-catalog.json；音频不进仓库
+tools/music.py            下载的音频 → 曲库（去水印标签、按歌名哈希命名）+ content/music-catalog.json；音频在私有仓库 shuying-music
 tools/music_build.py      曲库 + 曲序 → site/assets/data/music.json（专辑配色、她喜欢的歌和备注在这里改）
 tools/check_music.py      核对曲库目录里 music.json 要的文件一个不缺（传服务器前跑）
 site/assets/js/bgm.js     首页右下角的小唱片（main.js 直接加载，不等视口）
@@ -60,7 +80,7 @@ site/assets/js/bgm.js     首页右下角的小唱片（main.js 直接加载，�
    - 想加她的照片：`you` 章的 `photos` 里加 `"p42"`
 4. `node tools/build.mjs && python tools/fonts.py`（字体要重裁，否则新出现的字会退回系统宋体）
 5. 本地看：`python -m http.server 8810 --directory site`，打开 http://127.0.0.1:8810
-6. 提交、push，服务器上 `git pull && PASSCODE=0828 bash deploy/install.sh`
+6. 提交、push，服务器上 `cd ~/shuying && git pull && bash deploy/install.sh`（进门数字沿用）
 
 原图（约 64 MB）不进仓库，留在本机 `D:\projects\love-site-src\raw` 和飞书文档里。
 
